@@ -1,0 +1,2216 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+<title>SUNUYOON — Navigation Intelligente Dakar</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --r:#D0021B; --r-dark:#8B0011; --r-glow:rgba(208,2,27,0.3);
+  --r-bg:#1f0a0d; --r-border:#3a1015;
+  --blk:#0C0C0C; --blk2:#161616; --blk3:#222; --blk4:#2e2e2e; --blk5:#3a3a3a;
+  --wht:#FFFFFF; --gray:#666; --gray2:#888; --gray3:#BBB;
+  --amb:#F59E0B; --amb-bg:#1a1400; --amb-border:#2e2500; --amb-txt:#d4a800;
+  --grn:#22c55e; --grn-bg:#0d1a12; --grn-border:#1a3020;
+}
+html, body {
+  height: 100%; background: #070707;
+  display: flex; align-items: center; justify-content: center;
+  font-family: 'DM Sans', sans-serif;
+  -webkit-font-smoothing: antialiased; overflow: hidden;
+}
+
+/* ══ DEVICE SHELL ══ */
+#device {
+  width: 390px; height: 844px;
+  background: var(--blk); border-radius: 52px; overflow: hidden;
+  border: 1.5px solid #2a2a2a; position: relative;
+  box-shadow: 0 60px 120px rgba(0,0,0,0.9), inset 0 1px 0 rgba(255,255,255,0.05);
+  display: flex; flex-direction: column;
+  animation: deviceIn 0.5s cubic-bezier(0.34,1.56,0.64,1) both;
+}
+@keyframes deviceIn { from { opacity:0; transform:scale(0.94) translateY(20px); } }
+.notch {
+  position:absolute; top:0; left:50%; transform:translateX(-50%);
+  width:126px; height:36px; background:#000;
+  border-radius:0 0 22px 22px; z-index:100;
+}
+@media (max-width:430px),(max-height:860px) {
+  body { align-items:flex-start; background:#000; }
+  #device { width:100vw!important; height:100dvh!important; border-radius:0!important; border:none!important; box-shadow:none!important; }
+  .notch { display:none!important; }
+  .status-bar { padding-top:10px!important; }
+}
+
+/* STATUS BAR */
+.status-bar {
+  background:var(--blk); display:flex; align-items:center; justify-content:space-between;
+  padding:14px 28px 6px; flex-shrink:0; position:relative; z-index:5;
+}
+.status-time { font-size:15px; font-weight:600; color:var(--wht); letter-spacing:-0.3px; }
+.status-icons { display:flex; align-items:center; gap:6px; }
+
+/* SCREENS */
+.screen { display:none; flex-direction:column; flex:1; overflow:hidden; }
+.screen.active { display:flex; }
+
+/* ══ SPLASH ══ */
+#s-splash { background:var(--blk); align-items:center; justify-content:center; position:relative; overflow:hidden; }
+.splash-bg { position:absolute; inset:0; background:radial-gradient(ellipse 60% 50% at 50% 60%, rgba(208,2,27,0.12) 0%, transparent 70%); }
+.splash-grid { position:absolute; inset:0; background-image:linear-gradient(rgba(255,255,255,0.02) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,0.02) 1px,transparent 1px); background-size:32px 32px; mask-image:radial-gradient(ellipse at center,black 30%,transparent 80%); }
+.splash-content { text-align:center; position:relative; z-index:2; display:flex; flex-direction:column; align-items:center; }
+.splash-icon { width:70px; height:70px; background:var(--r); border-radius:20px; display:flex; align-items:center; justify-content:center; margin-bottom:22px; box-shadow:0 0 40px var(--r-glow),0 8px 24px rgba(0,0,0,0.6); animation:iconPulse 2s ease-in-out infinite; }
+@keyframes iconPulse { 0%,100%{box-shadow:0 0 40px var(--r-glow),0 8px 24px rgba(0,0,0,0.6);}50%{box-shadow:0 0 60px rgba(208,2,27,0.5),0 8px 24px rgba(0,0,0,0.6);} }
+.splash-logo { font-family:'Bebas Neue',sans-serif; font-size:60px; letter-spacing:6px; color:var(--wht); line-height:1; animation:fadeUp 0.5s 0.2s both; }
+.splash-logo em { color:var(--r); font-style:normal; }
+.splash-tag { font-size:11px; color:rgba(255,255,255,0.35); letter-spacing:3px; text-transform:uppercase; margin-top:8px; animation:fadeUp 0.5s 0.35s both; }
+.splash-loader { margin-top:60px; width:140px; height:2px; background:var(--blk3); border-radius:2px; overflow:hidden; animation:fadeUp 0.5s 0.5s both; }
+.splash-loader-fill { height:100%; background:var(--r); border-radius:2px; width:0%; animation:loadFill 1.6s 0.6s cubic-bezier(0.4,0,0.2,1) forwards; }
+@keyframes loadFill{to{width:100%;}}
+@keyframes fadeUp{from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:translateY(0);}}
+
+/* ══ ONBOARDING ══ */
+#s-onboard { background:var(--blk); }
+.onb-hero { position:relative; height:230px; flex-shrink:0; overflow:hidden; }
+.onb-hero svg { position:absolute; inset:0; width:100%; height:100%; }
+.onb-overlay { position:absolute; inset:0; background:linear-gradient(to bottom,rgba(12,12,12,0) 30%,rgba(12,12,12,0.7) 65%,rgba(12,12,12,1) 100%); }
+.onb-brand { position:absolute; bottom:14px; left:0; right:0; text-align:center; }
+.onb-logo { font-family:'Bebas Neue',sans-serif; font-size:44px; letter-spacing:6px; color:var(--wht); }
+.onb-logo em { color:var(--r); font-style:normal; }
+.onb-tagline { font-size:10px; color:rgba(255,255,255,0.4); letter-spacing:2.5px; text-transform:uppercase; margin-top:3px; }
+.onb-body { padding:14px 18px 20px; flex:1; display:flex; flex-direction:column; gap:10px; overflow-y:auto; }
+.onb-sec-lbl { font-size:10px; font-weight:600; color:var(--gray2); letter-spacing:1px; text-transform:uppercase; text-align:center; }
+.onb-vehicles { display:flex; gap:7px; }
+.onb-vcard { flex:1; background:var(--blk2); border:1.5px solid var(--blk3); border-radius:13px; padding:12px 5px; display:flex; flex-direction:column; align-items:center; gap:6px; cursor:pointer; transition:all 0.2s; }
+.onb-vcard.sel { border-color:var(--r); border-width:2px; background:var(--r-bg); }
+.onb-vcard svg { width:30px; height:30px; }
+.onb-vcard span { font-size:10px; font-weight:500; color:var(--gray2); }
+.onb-vcard.sel span { color:var(--wht); }
+.pref-row { display:flex; align-items:center; justify-content:space-between; background:var(--blk2); border:1px solid var(--blk3); border-radius:12px; padding:11px 13px; }
+.pref-label { font-size:12px; color:var(--gray3); font-weight:500; }
+.pref-label span { font-size:10px; color:var(--gray); display:block; margin-top:1px; }
+.toggle { width:40px; height:22px; background:var(--blk4); border-radius:11px; position:relative; cursor:pointer; transition:background 0.2s; flex-shrink:0; }
+.toggle.on { background:var(--r); }
+.toggle::after { content:''; position:absolute; top:2px; left:2px; width:18px; height:18px; background:#fff; border-radius:50%; transition:transform 0.2s; }
+.toggle.on::after { transform:translateX(18px); }
+.onb-btn { background:var(--r); color:var(--wht); border:none; border-radius:13px; padding:15px; font-size:14px; font-weight:700; cursor:pointer; width:100%; font-family:'DM Sans',sans-serif; display:flex; align-items:center; justify-content:center; gap:8px; transition:all 0.2s; box-shadow:0 4px 20px rgba(208,2,27,0.35); }
+.onb-btn:active { transform:scale(0.98); background:var(--r-dark); }
+
+/* ══ SHARED HEADER ══ */
+.app-header { background:var(--blk); padding:10px 14px 8px; display:flex; align-items:center; justify-content:space-between; border-bottom:1px solid var(--blk3); flex-shrink:0; }
+.h-logo { font-family:'Bebas Neue',sans-serif; font-size:21px; letter-spacing:2.5px; color:var(--wht); }
+.h-logo em { color:var(--r); font-style:normal; }
+.v-pill { display:flex; align-items:center; gap:5px; background:var(--blk2); border:1px solid var(--blk3); border-radius:10px; padding:5px 9px; cursor:pointer; font-size:11px; color:var(--gray3); font-weight:500; transition:background 0.15s; }
+.header-actions { display:flex; gap:7px; align-items:center; }
+.icon-btn { width:31px; height:31px; background:var(--blk2); border:1px solid var(--blk3); border-radius:9px; display:flex; align-items:center; justify-content:center; cursor:pointer; transition:background 0.15s; }
+.notif-dot { position:relative; }
+.notif-dot::after { content:''; position:absolute; top:4px; right:4px; width:7px; height:7px; background:var(--r); border-radius:50%; border:1.5px solid var(--blk2); }
+
+/* ══ PLAN ══ */
+.plan-panel { flex:1; overflow-y:auto; padding:10px 14px 14px; }
+/* ══ POLISH UI PREMIUM ══ */
+.btn-main { position:relative; overflow:hidden; }
+.btn-main::after { content:''; position:absolute; top:-50%; left:-60%; width:40%; height:200%; background:rgba(255,255,255,0.07); transform:skewX(-20deg); animation:btnShine 3.5s infinite; pointer-events:none; }
+@keyframes btnShine { 0%,100%{left:-60%} 50%{left:120%} }
+.res-route-pill { transition:all .2s cubic-bezier(0.34,1.2,0.64,1); }
+.res-route-pill.sel { transform:scale(1.03); }
+.res-route-pill:active { transform:scale(0.97); }
+.veh-card { transition:all .2s cubic-bezier(0.34,1.2,0.64,1); }
+.veh-card.sel { box-shadow:0 0 0 1.5px var(--r),0 8px 24px rgba(208,2,27,0.2); }
+.traffic-banner { position:relative; overflow:hidden; }
+.traffic-banner::after { content:''; position:absolute; top:0; left:-100%; width:60%; height:100%; background:linear-gradient(90deg,transparent,rgba(255,255,255,0.03),transparent); animation:shimmer 3s infinite; pointer-events:none; }
+@keyframes shimmer { to{left:150%} }
+.back-btn { display:flex;align-items:center;gap:5px;background:var(--blk2);border:1px solid var(--blk3);border-radius:9px;padding:6px 11px;font-size:11px;font-weight:600;color:#bbb;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .15s; }
+.back-btn:active { transform:scale(0.95); }
+.drv-profile { background:linear-gradient(145deg,#141414,#0f0f0f); border:1px solid #1e1e1e; border-radius:14px; padding:14px; margin-bottom:10px; }
+
+/* ══ PLAN PANEL ══ */
+.plan-panel::-webkit-scrollbar { width:3px; }
+.plan-panel::-webkit-scrollbar-thumb { background:var(--blk4); border-radius:2px; }
+.traffic-banner { display:flex; align-items:center; gap:8px; background:linear-gradient(135deg,rgba(245,158,11,0.08),rgba(245,158,11,0.04)); border:1px solid var(--amb-border); border-radius:10px; padding:8px 11px; margin-bottom:8px; }
+.traffic-dot { width:7px; height:7px; border-radius:50%; background:var(--amb); box-shadow:0 0 6px rgba(245,158,11,0.6); animation:blink 1.5s ease-in-out infinite; }
+@keyframes blink{0%,100%{opacity:1;}50%{opacity:0.4;}}
+.traffic-text { font-size:11px; color:var(--amb-txt); font-weight:500; flex:1; }
+.traffic-badge { font-size:10px; font-weight:700; color:var(--amb); background:rgba(245,158,11,0.12); padding:2px 7px; border-radius:8px; }
+
+/* ══ ROUTE CARD + AUTOCOMPLETE ══ */
+.route-card { background:var(--blk2); border:1px solid var(--blk3); border-radius:13px; overflow:visible; margin-bottom:8px; position:relative; }
+.route-card-inner { border-radius:13px; overflow:hidden; }
+.inp-row { display:flex; align-items:center; gap:10px; padding:10px 13px; border-bottom:1px solid var(--blk3); position:relative; }
+.inp-row:last-child { border-bottom:none; }
+.inp-row:focus-within { background:rgba(255,255,255,0.02); }
+.dot { width:9px; height:9px; border-radius:50%; flex-shrink:0; }
+.dot-w{background:var(--wht);} .dot-r{background:var(--r);} .dot-g{background:var(--blk5);}
+.inp-row input { border:none; background:transparent; font-size:13px; color:var(--wht); flex:1; outline:none; font-family:'DM Sans',sans-serif; min-width:0; }
+.inp-row input::placeholder { color:var(--gray); }
+.inp-icon { color:var(--gray); cursor:pointer; flex-shrink:0; }
+.inp-divider { display:flex; align-items:center; gap:10px; padding:0 13px; }
+.inp-line { flex:0 0 1px; width:1px; height:18px; background:var(--blk4); margin-left:4px; }
+.add-stop { display:flex; align-items:center; gap:6px; color:var(--r); font-size:11px; font-weight:600; cursor:pointer; flex:1; padding:3px 0; }
+
+/* Autocomplete dropdown */
+.autocomplete-list {
+  position:absolute; left:0; right:0; top:100%; z-index:500;
+  background:var(--blk2); border:1px solid var(--blk4);
+  border-radius:0 0 12px 12px; overflow:hidden;
+  box-shadow:0 8px 24px rgba(0,0,0,0.6); display:none;
+}
+.autocomplete-list.open { display:block; }
+.ac-item { padding:10px 14px; font-size:12px; color:var(--gray3); cursor:pointer; border-bottom:1px solid var(--blk3); display:flex; align-items:center; gap:9px; transition:background 0.15s; }
+.ac-item:last-child { border-bottom:none; }
+.ac-item:hover { background:var(--blk3); color:var(--wht); }
+.ac-item svg { flex-shrink:0; opacity:0.5; }
+.ac-item-main { font-size:12px; color:var(--wht); font-weight:500; }
+.ac-item-sub { font-size:10px; color:var(--gray); margin-top:1px; }
+.ac-loading { padding:10px 14px; font-size:11px; color:var(--gray); display:flex; align-items:center; gap:8px; }
+.ac-spinner { width:12px; height:12px; border:2px solid var(--blk4); border-top-color:var(--r); border-radius:50%; animation:spin 0.6s linear infinite; }
+@keyframes spin{to{transform:rotate(360deg);}}
+
+.option-tabs { display:flex; gap:6px; margin-bottom:8px; }
+.opt-tab { flex:1; background:var(--blk2); border:1px solid var(--blk3); border-radius:9px; padding:7px 4px; text-align:center; cursor:pointer; transition:all 0.15s; }
+.opt-tab.sel { background:var(--r-bg); border-color:var(--r); }
+.opt-tab-icon { font-size:14px; margin-bottom:2px; }
+.opt-tab-label { font-size:10px; font-weight:600; color:var(--gray3); }
+.opt-tab.sel .opt-tab-label { color:var(--r); }
+.sec-lbl { font-size:10px; font-weight:600; color:var(--gray2); letter-spacing:0.8px; text-transform:uppercase; margin-bottom:6px; }
+.preset-card { background:var(--blk2); border:1px solid var(--blk3); border-radius:11px; padding:8px 6px; cursor:pointer; transition:all 0.15s; }
+.preset-card:active { border-color:var(--r); background:var(--r-bg); transform:scale(0.97); }
+.preset-icon { font-size:15px; margin-bottom:3px; }
+.preset-name { font-size:10px; font-weight:600; color:var(--wht); }
+.preset-dist { font-size:9px; color:var(--gray); margin-top:1px; }
+.btn-main { background:var(--r); color:var(--wht); border:none; border-radius:12px; padding:13px; font-size:13px; font-weight:700; cursor:pointer; width:100%; font-family:'DM Sans',sans-serif; display:flex; align-items:center; justify-content:center; gap:8px; transition:all 0.2s; box-shadow:0 4px 16px rgba(208,2,27,0.3); }
+.btn-main:active { transform:scale(0.98); background:var(--r-dark); }
+.btn-outline { background:transparent; color:var(--gray3); border:1px solid var(--blk4); border-radius:12px; padding:11px; font-size:12px; font-weight:600; cursor:pointer; width:100%; font-family:'DM Sans',sans-serif; display:flex; align-items:center; justify-content:center; gap:6px; transition:all 0.2s; }
+.btn-outline:active { background:var(--blk2); }
+
+/* ══ MAP SCREENS ══ */
+.map-full { flex:1; position:relative; overflow:hidden; background:#f0f0f0; min-height:0; }
+.map-container { position:absolute; inset:0; }
+.map-btn-group { position:absolute; top:10px; right:10px; display:flex; flex-direction:column; gap:5px; z-index:10; }
+.map-btn { width:34px; height:34px; background:rgba(12,12,12,0.92); border:1px solid var(--blk4); border-radius:9px; display:flex; align-items:center; justify-content:center; cursor:pointer; backdrop-filter:blur(8px); transition:all 0.15s; }
+.map-btn:active { background:var(--blk3); }
+.map-loading { position:absolute; inset:0; display:flex; align-items:center; justify-content:center; flex-direction:column; gap:10px; background:#f0f0f0; z-index:5; transition:opacity 0.4s; }
+.map-loading.hidden { opacity:0; pointer-events:none; }
+.map-spinner { width:30px; height:30px; border:3px solid #1a1a1a; border-top-color:var(--r); border-radius:50%; animation:spin 0.7s linear infinite; }
+.map-loading-text { font-size:11px; color:var(--gray); }
+
+/* SHEET */
+.sheet { position:absolute; bottom:0; left:0; right:0; background:var(--blk); border-radius:20px 20px 0 0; transition:transform 0.35s cubic-bezier(0.4,0,0.2,1); transform:translateY(calc(100% - 52px)); height:58%; display:flex; flex-direction:column; box-shadow:0 -8px 30px rgba(0,0,0,0.6); z-index:20; }
+.sheet.open { transform:translateY(0); }
+.sheet-handle-area { padding:9px 16px 5px; flex-shrink:0; cursor:pointer; display:flex; align-items:center; justify-content:center; }
+.handle { width:36px; height:3px; background:var(--blk4); border-radius:2px; }
+.sheet-body { overflow-y:auto; padding:0 14px 20px; flex:1; }
+.route-alt { background:var(--blk2); border:1.5px solid var(--blk3); border-radius:11px; padding:11px 12px; margin-bottom:7px; cursor:pointer; transition:all 0.2s; }
+.route-alt.sel { border-color:var(--r); background:rgba(208,2,27,0.05); }
+.route-alt-top { display:flex; align-items:center; justify-content:space-between; margin-bottom:7px; }
+.route-alt-name { font-size:13px; font-weight:600; color:var(--wht); }
+.badge { font-size:10px; font-weight:700; padding:3px 9px; border-radius:20px; }
+.badge-r{background:var(--r-bg);color:var(--r);border:1px solid var(--r-border);}
+.badge-g{background:var(--grn-bg);color:var(--grn);border:1px solid var(--grn-border);}
+.badge-a{background:var(--amb-bg);color:var(--amb-txt);border:1px solid var(--amb-border);}
+.route-stats { display:flex; gap:10px; }
+.r-stat { font-size:11px; color:var(--gray); }
+.r-stat strong { color:var(--wht); font-weight:600; }
+.alert-row { display:flex; align-items:center; gap:8px; background:var(--amb-bg); border:1px solid var(--amb-border); border-radius:9px; padding:9px 11px; margin:8px 0; }
+.alert-dot { width:7px; height:7px; border-radius:50%; background:var(--amb); flex-shrink:0; animation:blink 1.5s infinite; }
+.alert-text { font-size:11px; color:var(--amb-txt); font-weight:500; }
+
+/* NAV SCREEN */
+#s-nav { background:#f0f0f0; overflow:hidden; }
+.nav-screen-map { flex:1; position:relative; overflow:hidden; min-height:0; }
+.nav-top-card { position:absolute; top:0; left:0; right:0; z-index:10; background:linear-gradient(to bottom,rgba(13,16,20,0.97) 70%,transparent); padding:12px 14px 28px; }
+.nav-dir-main { font-size:22px; font-weight:700; color:var(--wht); }
+.nav-dir-sub { font-size:13px; color:var(--gray3); margin-top:2px; }
+.nav-dist-badge { display:inline-flex; align-items:center; gap:5px; background:var(--r); padding:5px 12px; border-radius:20px; margin-top:7px; }
+.nav-dist-badge span { font-size:12px; font-weight:700; color:var(--wht); }
+.nav-bottom-bar { position:absolute; bottom:0; left:0; right:0; z-index:10; background:rgba(13,16,20,0.96); backdrop-filter:blur(10px); border-top:1px solid var(--blk3); padding:11px 14px; display:flex; gap:8px; align-items:center; }
+.nav-eta-block { flex:1; }
+.nav-eta-time { font-size:20px; font-weight:700; color:var(--wht); }
+.nav-eta-label { font-size:10px; color:var(--gray); }
+.nav-stop-btn { background:rgba(208,2,27,0.15); border:1px solid var(--r-border); border-radius:10px; padding:9px 15px; color:var(--r); font-size:12px; font-weight:700; cursor:pointer; font-family:'DM Sans',sans-serif; }
+
+/* DRIVER */
+#s-driver { background:var(--blk); }
+.drv-map-wrap { flex:0 0 200px; position:relative; overflow:hidden; }
+.drv-body { flex:1; overflow-y:auto; padding:12px 14px 16px; }
+.drv-body::-webkit-scrollbar { width:3px; }
+.drv-body::-webkit-scrollbar-thumb { background:var(--blk4); border-radius:2px; }
+.status-pill { display:flex; align-items:center; gap:6px; justify-content:center; background:var(--grn-bg); border:1px solid var(--grn-border); border-radius:20px; padding:10px 14px; cursor:pointer; transition:all 0.2s; margin-bottom:10px; }
+.status-pill.off { background:var(--blk2); border-color:var(--blk3); }
+.status-dot { width:8px; height:8px; border-radius:50%; background:var(--grn); animation:blink 1.5s infinite; }
+.status-pill.off .status-dot { background:var(--gray); animation:none; }
+.status-text { font-size:13px; font-weight:600; color:var(--grn); }
+.status-pill.off .status-text { color:var(--gray); }
+.drv-profile { background:var(--blk2); border:1px solid var(--blk3); border-radius:14px; padding:14px; margin-bottom:10px; }
+.drv-top { display:flex; gap:12px; align-items:center; margin-bottom:12px; }
+.avatar { width:48px; height:48px; border-radius:50%; background:var(--r); display:flex; align-items:center; justify-content:center; font-size:16px; font-weight:700; color:white; flex-shrink:0; border:2px solid rgba(208,2,27,0.3); }
+.drv-name { font-size:15px; font-weight:600; color:var(--wht); }
+.drv-meta { font-size:11px; color:var(--gray); margin-top:2px; }
+.drv-stars { display:flex; align-items:center; gap:4px; margin-top:4px; }
+.d-badge { display:inline-flex; align-items:center; gap:4px; background:var(--r-bg); color:var(--r); font-size:9px; font-weight:700; padding:2px 8px; border-radius:20px; border:1px solid var(--r-border); }
+.drv-info-grid { display:grid; grid-template-columns:1fr 1fr; gap:7px; }
+.drv-info-cell { background:var(--blk3); border-radius:9px; padding:9px 11px; }
+.drv-info-label { font-size:10px; color:var(--gray); margin-bottom:3px; }
+.drv-info-val { font-size:12px; color:var(--wht); font-weight:500; }
+.drv-vehicle { background:var(--blk2); border:1px solid var(--blk3); border-radius:13px; padding:12px 13px; margin-bottom:10px; }
+.fuel-row { display:flex; justify-content:space-between; align-items:center; margin-bottom:6px; }
+.fuel-label { font-size:12px; color:var(--wht); font-weight:500; }
+.fuel-pct { font-size:13px; font-weight:700; color:var(--r); }
+.fuel-bar { height:5px; background:var(--blk3); border-radius:3px; margin-bottom:10px; }
+.fuel-fill { height:100%; background:linear-gradient(to right,var(--r-dark),var(--r)); border-radius:3px; }
+.veh-grid { display:grid; grid-template-columns:1fr 1fr; gap:5px; }
+.veh-cell { font-size:10px; color:var(--gray); }
+.veh-cell span { color:var(--wht); font-weight:500; display:block; margin-top:1px; }
+.veh-cell .ok{color:var(--grn);} .veh-cell .warn{color:var(--amb);}
+
+/* PERTURBATIONS */
+#s-perturbations { background:var(--blk); }
+.perturb-scroll { flex:1; overflow-y:auto; padding:12px 14px 20px; }
+.perturb-scroll::-webkit-scrollbar { width:3px; }
+.perturb-scroll::-webkit-scrollbar-thumb { background:var(--blk4); border-radius:2px; }
+.ministry-header { background:linear-gradient(135deg,#0a1628,#0d1f3c); border:1px solid #1a2d50; border-radius:13px; padding:12px 13px; margin-bottom:12px; display:flex; align-items:center; gap:10px; }
+.ministry-logo { width:40px; height:40px; background:linear-gradient(135deg,#1a6b3c,#0d4a28); border-radius:9px; display:flex; align-items:center; justify-content:center; font-size:18px; flex-shrink:0; }
+.ministry-name { font-size:12px; font-weight:700; color:var(--wht); }
+.ministry-sub { font-size:10px; color:#6b8fbd; margin-top:2px; }
+.ministry-live { margin-left:auto; display:flex; align-items:center; gap:4px; background:rgba(34,197,94,0.1); border:1px solid rgba(34,197,94,0.2); border-radius:20px; padding:3px 9px; }
+.ministry-live-dot { width:6px; height:6px; border-radius:50%; background:var(--grn); animation:blink 1.5s infinite; }
+.ministry-live-txt { font-size:9px; font-weight:600; color:var(--grn); }
+.perturb-map-wrap { height:130px; border-radius:13px; overflow:hidden; margin-bottom:12px; position:relative; border:1px solid var(--blk3); }
+.perturb-stats { display:grid; grid-template-columns:repeat(3,1fr); gap:6px; margin-bottom:12px; }
+.pstat-box { background:var(--blk2); border:1px solid var(--blk3); border-radius:10px; padding:9px 7px; text-align:center; }
+.pstat-num { font-size:18px; font-weight:700; }
+.pstat-lbl { font-size:9px; color:var(--gray); margin-top:2px; }
+.perturb-filters { display:flex; gap:5px; margin-bottom:10px; overflow-x:auto; }
+.perturb-filters::-webkit-scrollbar { display:none; }
+.pfil { flex-shrink:0; background:var(--blk2); border:1px solid var(--blk3); border-radius:20px; padding:5px 11px; font-size:10px; font-weight:600; color:var(--gray3); cursor:pointer; white-space:nowrap; }
+.pfil.on { background:var(--r-bg); border-color:var(--r); color:var(--r); }
+.perturb-card { background:var(--blk2); border:1.5px solid var(--blk3); border-radius:13px; padding:12px; margin-bottom:7px; cursor:pointer; }
+.perturb-card.urgent { border-color:rgba(208,2,27,0.35); background:rgba(208,2,27,0.04); }
+.perturb-card.warning { border-color:rgba(245,158,11,0.3); background:rgba(245,158,11,0.03); }
+.pc-top { display:flex; align-items:flex-start; gap:9px; margin-bottom:7px; }
+.pc-icon { width:36px; height:36px; border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:16px; flex-shrink:0; }
+.pc-icon.red{background:var(--r-bg);} .pc-icon.amber{background:var(--amb-bg);} .pc-icon.blue{background:#0a1628;}
+.pc-title { font-size:12.5px; font-weight:700; color:var(--wht); flex:1; }
+.pc-badge { font-size:9px; font-weight:700; padding:2px 7px; border-radius:20px; flex-shrink:0; margin-top:2px; }
+.pc-badge.urgente{background:var(--r-bg);color:var(--r);border:1px solid var(--r-border);}
+.pc-badge.attention{background:var(--amb-bg);color:var(--amb-txt);border:1px solid var(--amb-border);}
+.pc-location { display:flex; align-items:center; gap:4px; font-size:10.5px; color:var(--gray); margin-bottom:5px; }
+.pc-desc { font-size:11px; color:var(--gray3); line-height:1.5; margin-bottom:7px; }
+.pc-impact { display:flex; align-items:center; gap:5px; margin-top:7px; padding:6px 9px; background:rgba(245,158,11,0.06); border:1px solid rgba(245,158,11,0.15); border-radius:7px; }
+.pc-impact-txt { font-size:10px; color:var(--amb-txt); }
+.pc-meta { display:flex; justify-content:space-between; align-items:center; }
+.pc-time { font-size:10px; color:var(--gray); }
+.pc-source { font-size:9.5px; color:rgba(96,165,250,0.7); font-weight:600; }
+
+/* TOAST */
+#toast { position:absolute; bottom:80px; left:50%; transform:translateX(-50%) translateY(20px); background:var(--blk2); color:var(--wht); border:1px solid var(--blk4); padding:9px 16px; border-radius:20px; font-size:12px; font-weight:500; opacity:0; transition:all 0.3s; pointer-events:none; white-space:nowrap; z-index:999; display:flex; align-items:center; gap:7px; box-shadow:0 4px 20px rgba(0,0,0,0.5); }
+#toast.show { opacity:1; transform:translateX(-50%) translateY(0); }
+
+/* HOME BAR */
+.home-bar { background:var(--blk); padding:4px 0 16px; display:flex; justify-content:center; flex-shrink:0; }
+.home-ind { width:120px; height:4px; background:var(--blk3); border-radius:2px; }
+
+/* MODAL */
+.modal-overlay { position:absolute; inset:0; background:rgba(0,0,0,0.7); backdrop-filter:blur(4px); z-index:200; display:none; align-items:flex-end; }
+.modal-overlay.open { display:flex; }
+.modal-sheet { width:100%; background:var(--blk2); border-radius:20px 20px 0 0; padding:18px 16px 28px; animation:sheetUp 0.3s cubic-bezier(0.34,1.56,0.64,1) both; position:relative; }
+@keyframes sheetUp{from{transform:translateY(100%);}}
+.modal-title { font-size:15px; font-weight:700; color:var(--wht); margin-bottom:14px; }
+.modal-close { position:absolute; top:18px; right:16px; color:var(--gray); cursor:pointer; font-size:22px; line-height:1; }
+.notif-item { display:flex; gap:9px; align-items:flex-start; padding:11px 0; border-bottom:1px solid var(--blk3); }
+.notif-icon { width:32px; height:32px; border-radius:9px; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+.notif-title { font-size:12px; font-weight:600; color:var(--wht); }
+.notif-body { font-size:11px; color:var(--gray); margin-top:2px; line-height:1.4; }
+.notif-time { font-size:10px; color:var(--gray); margin-top:2px; }
+
+/* ══ MAP TABS ══ */
+.map-tab { flex:1; padding:9px 4px; text-align:center; font-size:10px; font-weight:600; color:var(--gray); cursor:pointer; border-bottom:2px solid transparent; transition:.2s; letter-spacing:.2px; }
+.map-tab.active { color:var(--r); border-bottom-color:var(--r); }
+.map-layer { display:none; }
+.map-layer.active { display:flex; flex:1; flex-direction:column; }
+/* Signalement bouton nav */
+/* #signalBtn redefined below */
+/* Modal signalement */
+#signalModal { position:fixed; inset:0; z-index:999; background:rgba(0,0,0,0.75); display:flex; align-items:flex-end; opacity:0; pointer-events:none; transition:.3s; }
+#signalModal.open { opacity:1; pointer-events:all; }
+.signal-sheet { background:linear-gradient(to bottom,#121212,#0c0c0c); border-radius:20px 20px 0 0; border-top:1px solid #2a2a2a; padding:18px 16px 30px; width:100%; }
+.signal-title { font-size:14px; font-weight:700; color:var(--wht); margin-bottom:4px; }
+.signal-sub { font-size:11px; color:var(--gray); margin-bottom:14px; }
+.signal-grid { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:14px; }
+.signal-opt { background:var(--blk2); border:1px solid var(--blk4); border-radius:12px; padding:12px 10px; text-align:center; cursor:pointer; transition:.2s; }
+.signal-opt:hover { border-color:var(--r); background:var(--r-bg); }
+.signal-opt .so-icon { font-size:24px; margin-bottom:5px; }
+.signal-opt .so-label { font-size:11px; font-weight:600; color:var(--gray3); }
+.signal-opt .so-pts { font-size:10px; color:var(--grn); margin-top:2px; font-weight:700; }
+/* Points chauffeur */
+.pts-hero { background:linear-gradient(135deg,#0d1a0f,#0a1a0e); border:1px solid rgba(34,197,94,0.2); border-radius:14px; padding:14px; margin-bottom:10px; display:flex; align-items:center; gap:12px; }
+.pts-circle { width:58px; height:58px; border-radius:50%; background:conic-gradient(#22c55e var(--pct,210deg),#1a2e1a 0); display:flex; align-items:center; justify-content:center; flex-shrink:0; box-shadow:0 0 18px rgba(34,197,94,0.2); }
+.pts-inner { width:44px; height:44px; border-radius:50%; background:#0a1a0e; display:flex; flex-direction:column; align-items:center; justify-content:center; }
+.pts-val { font-size:14px; font-weight:800; color:var(--grn); line-height:1; }
+.pts-lbl-sm { font-size:7px; color:#3a5a3a; font-weight:600; letter-spacing:.5px; }
+.pts-info { flex:1; }
+.pts-level { font-size:16px; font-weight:700; color:var(--grn); margin-bottom:2px; }
+.pts-next { font-size:11px; color:var(--gray); }
+.pts-bar-wrap { height:4px; background:#1a2e1a; border-radius:2px; margin-top:6px; }
+.pts-bar-fill { height:100%; background:var(--grn); border-radius:2px; transition:width .5s; }
+.pts-badge-row { display:flex; gap:6px; margin-bottom:10px; flex-wrap:wrap; }
+.pts-badge { display:flex; align-items:center; gap:5px; background:var(--blk2); border:1px solid var(--blk4); border-radius:20px; padding:4px 10px; font-size:10px; color:var(--gray3); }
+.pts-badge.earned { border-color:rgba(34,197,94,0.3); color:var(--grn); }
+.pts-history { background:var(--blk2); border-radius:12px; border:1px solid var(--blk3); overflow:hidden; margin-bottom:10px; }
+.pts-history-title { font-size:11px; font-weight:700; color:var(--gray); padding:10px 12px 6px; border-bottom:1px solid var(--blk3); letter-spacing:.5px; text-transform:uppercase; }
+.pts-row { display:flex; align-items:center; gap:10px; padding:9px 12px; border-bottom:1px solid rgba(255,255,255,0.04); }
+.pts-row:last-child { border-bottom:none; }
+.pts-row-icon { font-size:18px; flex-shrink:0; }
+.pts-row-info { flex:1; }
+.pts-row-label { font-size:12px; font-weight:500; color:var(--gray3); }
+.pts-row-time { font-size:10px; color:var(--gray); }
+.pts-row-val { font-size:13px; font-weight:700; color:var(--grn); }
+.rewards-grid { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:10px; }
+.reward-card { background:var(--blk2); border:1px solid var(--blk3); border-radius:12px; padding:12px; text-align:center; }
+.reward-card.locked { opacity:.5; }
+.reward-icon { font-size:26px; margin-bottom:5px; }
+.reward-name { font-size:11px; font-weight:600; color:var(--gray3); margin-bottom:3px; }
+.reward-cost { font-size:10px; color:var(--grn); font-weight:700; }
+.reward-btn { margin-top:6px; padding:4px 10px; border-radius:20px; border:1px solid rgba(34,197,94,0.3); background:rgba(34,197,94,0.08); color:var(--grn); font-size:10px; font-weight:600; cursor:pointer; font-family:inherit; }
+/* Notifications ministère */
+#ministryRouteAlerts .perturb-card { margin-bottom:8px; }
+/* ══ RESULT SHEET (bottom drawer over full map) ══ */
+.res-sheet {
+  position:absolute; bottom:0; left:0; right:0; z-index:20;
+  background:rgba(10,10,12,0.96);
+  border-radius:18px 18px 0 0;
+  border-top:1px solid #222;
+  backdrop-filter:blur(16px);
+  transition:transform .35s cubic-bezier(0.34,1.2,0.64,1);
+  max-height:70%;
+  display:flex; flex-direction:column;
+}
+/* Par défaut : mini — montre seulement handle + barre compacte (≈140px) */
+.res-sheet { transform:translateY(calc(100% - 140px)); }
+.res-sheet.expanded { transform:translateY(0); }
+.res-sheet-handle { padding:8px 0 4px; text-align:center; cursor:pointer; flex-shrink:0; }
+.res-sheet-body { padding:0 12px 14px; overflow-y:auto; flex:1; }
+
+/* Barre compacte toujours visible */
+.res-mini-bar {
+  display:flex; align-items:center; gap:6px; padding:0 12px 10px;
+  flex-shrink:0;
+}
+.res-route-pill {
+  flex:1; background:var(--blk2); border:1px solid var(--blk3); border-radius:11px;
+  padding:8px 6px; text-align:center; cursor:pointer; transition:.15s;
+}
+.res-route-pill.sel { border-color:var(--r); background:var(--r-bg); }
+.res-route-pill .rp-dur { font-size:15px; font-weight:800; color:#fff; line-height:1; }
+.res-route-pill .rp-lbl { font-size:8px; color:#555; margin-top:1px; }
+.res-route-pill .rp-badge { font-size:8px; font-weight:700; margin-top:2px; }
+
+/* ══ MINISTRY BANNER inside sheet ══ */
+.min-banner {
+  background:linear-gradient(135deg,rgba(10,22,48,0.98),rgba(13,31,60,0.98));
+  border-bottom:1px solid rgba(59,130,246,0.15);
+  padding:9px 12px 0;
+  flex-shrink:0;
+}
+.min-alert-text { font-size:11px; color:#ff5f6d; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.min-alerts-scroll {
+  display:flex; gap:7px; overflow-x:auto; padding:8px 0;
+  scrollbar-width:none;
+}
+.min-alerts-scroll::-webkit-scrollbar { display:none; }
+.min-chip {
+  display:flex; align-items:center; gap:5px; flex-shrink:0;
+  background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08);
+  border-radius:20px; padding:4px 10px; font-size:10px; color:#aaa; white-space:nowrap;
+  cursor:pointer; transition:.15s;
+}
+.min-chip.urgent { border-color:rgba(208,2,27,0.3); color:#ff5f6d; background:rgba(208,2,27,0.06); }
+.min-chip.warn   { border-color:rgba(245,158,11,0.3); color:#F59E0B; background:rgba(245,158,11,0.06); }
+.min-chip.info   { border-color:rgba(59,130,246,0.3); color:#93c5fd; background:rgba(59,130,246,0.06); }
+
+/* ══ NAV SIGNAL BUTTON ══ */
+#signalBtn {
+  position:absolute; right:14px; bottom:170px; z-index:20;
+  width:58px; height:58px;
+  background:linear-gradient(135deg,#D0021B,#a80016);
+  border:3px solid rgba(255,255,255,0.25);
+  border-radius:50%;
+  display:flex; flex-direction:column; align-items:center; justify-content:center; gap:1px;
+  cursor:pointer;
+  box-shadow:0 4px 20px rgba(208,2,27,0.6), 0 0 0 5px rgba(208,2,27,0.12);
+  transition:.2s;
+  animation:pulse-signal 2.5s ease-in-out infinite;
+}
+@keyframes pulse-signal {
+  0%,100% { box-shadow:0 4px 20px rgba(208,2,27,0.6), 0 0 0 4px rgba(208,2,27,0.15); }
+  50%      { box-shadow:0 4px 24px rgba(208,2,27,0.8), 0 0 0 8px rgba(208,2,27,0.08); }
+}
+#signalBtn:active { transform:scale(0.93); }
+#signalBtn .sb-icon { font-size:22px; line-height:1; }
+#signalBtn .sb-label { font-size:8px; font-weight:800; color:rgba(255,255,255,0.9); letter-spacing:.5px; text-transform:uppercase; }
+
+/* ══ SIGNAL MODAL ══ */
+#signalModal {
+  position:absolute; inset:0; z-index:50;
+  background:rgba(0,0,0,0.72); display:flex; align-items:flex-end;
+  opacity:0; pointer-events:none; transition:.3s;
+}
+#signalModal.open { opacity:1; pointer-events:all; }
+.signal-sheet {
+  background:linear-gradient(to bottom,#131313,#0d0d0d);
+  border-radius:20px 20px 0 0; border-top:1px solid #2a2a2a;
+  padding:18px 16px 30px; width:100%;
+}
+.signal-title { font-size:14px; font-weight:700; color:var(--wht); margin-bottom:2px; }
+.signal-sub { font-size:11px; color:var(--gray); margin-bottom:14px; }
+.signal-grid { display:grid; grid-template-columns:1fr 1fr 1fr; gap:7px; margin-bottom:12px; }
+.signal-opt {
+  background:var(--blk2); border:1px solid var(--blk4); border-radius:12px;
+  padding:11px 6px; text-align:center; cursor:pointer; transition:.2s;
+}
+.signal-opt:hover { border-color:var(--r); background:var(--r-bg); }
+.signal-opt:active { transform:scale(0.95); }
+.so-icon { font-size:22px; margin-bottom:4px; }
+.so-label { font-size:10px; font-weight:600; color:var(--gray3); }
+.so-pts { font-size:10px; color:var(--grn); margin-top:2px; font-weight:700; }
+
+/* Leaflet overrides */
+.min-tab { flex:1; padding:9px 4px; text-align:center; font-size:9px; font-weight:700; color:rgba(147,197,253,0.4); cursor:pointer; border-bottom:2px solid transparent; transition:.2s; letter-spacing:.3px; text-transform:uppercase; }
+.min-tab.active { color:#93c5fd; border-bottom-color:#3B82F6; }
+.min-panel { display:none; flex:1; overflow-y:auto; }
+.min-panel.active { display:flex; flex-direction:column; }
+.min-kpi { background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.08); border-radius:10px; padding:10px 8px; text-align:center; }
+.min-kpi-val { font-size:22px; font-weight:800; line-height:1; }
+.min-kpi-lbl { font-size:9px; color:#555; margin-top:3px; font-weight:600; text-transform:uppercase; letter-spacing:.4px; }
+.min-card { background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.07); border-radius:12px; padding:12px; }
+.min-card-title { font-size:11px; font-weight:700; color:#93c5fd; letter-spacing:.3px; }
+.bar-wrap { flex:1; display:flex; flex-direction:column; align-items:center; gap:5px; }
+.bar-col { width:100%; border-radius:3px 3px 0 0; min-height:3px; }
+.bar-day { font-size:8px; color:#444; font-weight:600; }
+.stat-row { display:flex; align-items:center; gap:8px; font-size:11px; color:#888; }
+.stat-bar-wrap { flex:1; height:5px; background:#1a1a1a; border-radius:3px; overflow:hidden; }
+.stat-bar { height:100%; border-radius:3px; }
+.zone-rank { display:flex; align-items:center; gap:8px; padding:6px 0; border-bottom:1px solid rgba(255,255,255,0.04); }
+.zone-rank:last-child { border-bottom:none; }
+.zone-rank-num { width:20px; height:20px; border-radius:50%; background:#1a1a2e; color:#93c5fd; font-size:10px; font-weight:800; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+.zone-rank-name { flex:1; font-size:12px; color:#ccc; }
+.zone-rank-count { font-size:11px; font-weight:700; }
+/* FORM */
+.form-lbl { font-size:10px; font-weight:700; color:#666; text-transform:uppercase; letter-spacing:.4px; margin-bottom:4px; }
+.form-input, .form-select { width:100%; background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.1); border-radius:9px; padding:9px 11px; font-size:12px; color:#ccc; font-family:'DM Sans',sans-serif; outline:none; transition:.2s; }
+.form-input:focus, .form-select:focus { border-color:rgba(59,130,246,0.5); background:rgba(59,130,246,0.05); }
+.form-select option { background:#111; color:#ccc; }
+.grav-btn { flex:1; padding:7px 4px; text-align:center; font-size:10px; font-weight:600; border-radius:8px; border:1px solid rgba(255,255,255,0.1); background:rgba(255,255,255,0.03); color:#888; cursor:pointer; transition:.2s; }
+.grav-btn.active { border-color:rgba(59,130,246,0.5); background:rgba(59,130,246,0.12); color:#93c5fd; }
+/* SIG HISTORY */
+.sig-item { display:flex; gap:10px; padding:10px 0; border-bottom:1px solid rgba(255,255,255,0.05); }
+.sig-item:last-child { border-bottom:none; }
+.sig-dot { width:8px; height:8px; border-radius:50%; flex-shrink:0; margin-top:4px; }
+.sig-body { flex:1; }
+.sig-title { font-size:12px; font-weight:600; color:#ccc; margin-bottom:2px; }
+.sig-meta { font-size:10px; color:#555; margin-bottom:4px; }
+.sig-status { display:inline-block; font-size:9px; font-weight:700; padding:2px 8px; border-radius:20px; }
+.sig-status.warn { background:rgba(245,158,11,0.12); color:#F59E0B; border:1px solid rgba(245,158,11,0.2); }
+.sig-status.urg { background:rgba(208,2,27,0.12); color:#ff5f6d; border:1px solid rgba(208,2,27,0.2); }
+.sig-status.ok { background:rgba(34,197,94,0.12); color:#22c55e; border:1px solid rgba(34,197,94,0.2); }
+/* ZONE BUTTONS */
+.zone-btn { padding:8px 6px; text-align:center; font-size:10px; font-weight:600; border-radius:9px; border:1px solid rgba(255,255,255,0.08); background:rgba(255,255,255,0.03); color:#888; cursor:pointer; transition:.2s; }
+.zone-btn.active { border-color:rgba(59,130,246,0.5); background:rgba(59,130,246,0.12); color:#93c5fd; }
+/* Leaflet overrides */
+.leaflet-control-zoom,.leaflet-control-attribution { display:none!important; }
+.leaflet-popup-content-wrapper { background:#ffffff!important; color:#222!important; border:1px solid #ddd!important; border-radius:10px!important; box-shadow:0 4px 14px rgba(0,0,0,0.15)!important; font-family:'DM Sans',sans-serif!important; font-size:12px!important; }
+.leaflet-popup-tip { background:#ffffff!important; }
+</style>
+</head>
+<body>
+<div id="device">
+  <div class="notch"></div>
+
+  <!-- STATUS BAR -->
+  <div class="status-bar">
+    <span class="status-time" id="clockTime">09:41</span>
+    <div class="status-icons">
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><rect x="1" y="7" width="2" height="7" fill="white" opacity="0.4"/><rect x="5" y="5" width="2" height="9" fill="white" opacity="0.6"/><rect x="9" y="3" width="2" height="11" fill="white" opacity="0.8"/><rect x="13" y="1" width="2" height="13" fill="white"/></svg>
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M8 3C10.5 3 12.7 4.2 14 6.1L15.5 4.6C13.8 2.4 11.1 1 8 1C4.9 1 2.2 2.4 0.5 4.6L2 6.1C3.3 4.2 5.5 3 8 3Z" fill="white" opacity="0.5"/><path d="M8 7C9.7 7 11.2 7.8 12.2 9L13.7 7.5C12.3 5.9 10.3 5 8 5C5.7 5 3.7 5.9 2.3 7.5L3.8 9C4.8 7.8 6.3 7 8 7Z" fill="white" opacity="0.75"/><circle cx="8" cy="13" r="2" fill="white"/></svg>
+      <svg width="25" height="12" viewBox="0 0 25 12" fill="none"><rect x="0.5" y="0.5" width="21" height="11" rx="3.5" stroke="white" stroke-opacity="0.35"/><rect x="2" y="2" width="16" height="8" rx="2" fill="white"/><path d="M23 4v4a2 2 0 0 0 0-4z" fill="white" opacity="0.4"/></svg>
+    </div>
+  </div>
+
+  <!-- ══ SPLASH ══ -->
+  <div id="s-splash" class="screen active">
+    <div class="splash-bg"></div><div class="splash-grid"></div>
+    <div class="splash-content">
+      <div class="splash-icon"><svg width="36" height="36" viewBox="0 0 36 36" fill="none"><path d="M18 4L22 14H32L24 20L27 30L18 24L9 30L12 20L4 14H14Z" fill="white"/></svg></div>
+      <div class="splash-logo">SUNU<em>YOON</em></div>
+      <div class="splash-tag">Day Daw Rek · Dakar</div>
+      <div class="splash-loader"><div class="splash-loader-fill"></div></div>
+    </div>
+  </div>
+
+  <!-- ══ ONBOARDING ══ -->
+  <div id="s-onboard" class="screen">
+    <div class="onb-hero" style="position:relative;">
+      <!-- Bouton retour splash -->
+      <button onclick="goTo('s-splash')" style="position:absolute;top:14px;left:14px;z-index:20;background:rgba(0,0,0,0.55);border:1px solid rgba(255,255,255,0.12);border-radius:9px;padding:6px 11px;font-size:11px;font-weight:600;color:#ccc;cursor:pointer;font-family:'DM Sans',sans-serif;display:flex;align-items:center;gap:5px;backdrop-filter:blur(8px);">
+        <svg width="11" height="11" viewBox="0 0 12 12" fill="none"><path d="M8 2L4 6L8 10" stroke="#CCC" stroke-width="1.8" stroke-linecap="round"/></svg>Retour
+      </button>
+      <svg viewBox="0 0 390 230" preserveAspectRatio="xMidYMid slice">
+        <rect width="390" height="230" fill="#0d0d0d"/>
+        <line x1="0" y1="40" x2="390" y2="40" stroke="#161616" stroke-width="1"/><line x1="0" y1="80" x2="390" y2="80" stroke="#161616" stroke-width="1"/><line x1="0" y1="120" x2="390" y2="120" stroke="#161616" stroke-width="1"/><line x1="0" y1="160" x2="390" y2="160" stroke="#161616" stroke-width="1"/>
+        <line x1="65" y1="0" x2="65" y2="230" stroke="#161616" stroke-width="1"/><line x1="130" y1="0" x2="130" y2="230" stroke="#161616" stroke-width="1"/><line x1="195" y1="0" x2="195" y2="230" stroke="#161616" stroke-width="1"/><line x1="260" y1="0" x2="260" y2="230" stroke="#161616" stroke-width="1"/>
+        <path d="M0 55 Q80 38 140 28 Q210 18 270 14 Q330 10 390 8" stroke="#0d1e2e" stroke-width="18" fill="none"/>
+        <path d="M0 95 Q70 78 130 65 Q200 52 265 45 Q320 40 390 37" stroke="#222" stroke-width="10" fill="none"/>
+        <path d="M0 185 Q100 180 195 176 Q290 172 390 169" stroke="#252525" stroke-width="11" fill="none"/>
+        <path d="M88 230 Q105 210 118 185 Q135 160 195 155 Q225 153 235 125 Q238 80 236 30" stroke="#282828" stroke-width="9" fill="none"/>
+        <path d="M68 200 Q90 188 120 170 Q138 158 195 155 Q215 152 232 128 Q236 88 236 36" fill="none" stroke="#D0021B" stroke-width="3" stroke-dasharray="7 5" stroke-linecap="round" opacity="0.85"/>
+        <g transform="translate(56,185)"><path d="M12 0C7.6 0 4 3.6 4 8c0 6 8 14 8 14s8-8 8-14c0-4.4-3.6-8-8-8z" fill="#FFFFFF"/><circle cx="12" cy="8" r="4" fill="#111"/></g>
+        <g transform="translate(224,22)"><path d="M12 0C7.6 0 4 3.6 4 8c0 6 8 14 8 14s8-8 8-14c0-4.4-3.6-8-8-8z" fill="#D0021B"/><circle cx="12" cy="8" r="4" fill="white"/></g>
+        <text x="10" y="140" font-family="DM Sans,sans-serif" font-size="10" fill="#2a2a2a" font-weight="600">PLATEAU</text>
+        <text x="248" y="115" font-family="DM Sans,sans-serif" font-size="10" fill="#2a2a2a" font-weight="600">FANN</text>
+        <text x="205" y="10" font-family="DM Sans,sans-serif" font-size="9" fill="#444" font-weight="500">UCAD</text>
+      </svg>
+      <div class="onb-overlay"></div>
+      <div class="onb-brand"><div class="onb-logo">SUNU<em>YOON</em></div><div class="onb-tagline">Day Daw Rek · Dakar</div></div>
+    </div>
+    <div class="onb-body">
+      <div><div class="onb-sec-lbl" style="margin-bottom:10px;">Votre véhicule</div>
+      <div class="onb-vehicles">
+        <div class="onb-vcard sel" onclick="selectV(this,'Voiture','🚗')"><svg viewBox="0 0 32 32" fill="none"><rect x="2" y="10" width="28" height="13" rx="4" fill="#D0021B"/><rect x="6" y="5" width="20" height="10" rx="3" fill="#CCC"/><circle cx="9" cy="24" r="4" fill="#111" stroke="#555" stroke-width="1.5"/><circle cx="23" cy="24" r="4" fill="#111" stroke="#555" stroke-width="1.5"/><rect x="7" y="6" width="7" height="7" rx="1.5" fill="#999"/><rect x="16" y="6" width="7" height="7" rx="1.5" fill="#999"/></svg><span>Voiture</span></div>
+        <div class="onb-vcard" onclick="selectV(this,'Moto','🏍️')"><svg viewBox="0 0 32 32" fill="none"><circle cx="8" cy="23" r="6" fill="none" stroke="#666" stroke-width="2"/><circle cx="24" cy="23" r="6" fill="none" stroke="#666" stroke-width="2"/><path d="M8 23L16 13L21 13L24 23" stroke="#D0021B" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/><circle cx="16" cy="12" r="2.5" fill="#D0021B"/></svg><span>Moto</span></div>
+        <div class="onb-vcard" onclick="selectV(this,'Van','🚐')"><svg viewBox="0 0 32 32" fill="none"><rect x="1" y="10" width="26" height="14" rx="3" fill="#D0021B"/><rect x="2" y="11" width="10" height="10" rx="2" fill="#888"/><rect x="24" y="12" width="5" height="8" rx="1" fill="#CCC"/><circle cx="7" cy="25" r="4" fill="#111" stroke="#666" stroke-width="1.5"/><circle cx="21" cy="25" r="4" fill="#111" stroke="#666" stroke-width="1.5"/></svg><span>Van</span></div>
+        <div class="onb-vcard" onclick="selectV(this,'Camion','🚛')"><svg viewBox="0 0 32 32" fill="none"><rect x="1" y="11" width="18" height="12" rx="3" fill="#D0021B"/><rect x="19" y="7" width="12" height="16" rx="3" fill="#CCC"/><circle cx="6" cy="25" r="3.5" fill="#111" stroke="#666" stroke-width="1.5"/><circle cx="17" cy="25" r="3.5" fill="#111" stroke="#666" stroke-width="1.5"/><circle cx="26" cy="25" r="3.5" fill="#111" stroke="#666" stroke-width="1.5"/></svg><span>Camion</span></div>
+      </div></div>
+      <div style="display:flex;flex-direction:column;gap:7px;margin:4px 0;">
+        <div style="display:flex;align-items:center;gap:10px;background:var(--blk2);border:1px solid var(--blk3);border-radius:11px;padding:10px 12px;">
+          <div style="width:22px;height:22px;background:rgba(34,197,94,0.15);border:1.5px solid #22c55e;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+            <svg width="11" height="11" viewBox="0 0 12 12" fill="none"><path d="M2 6L5 9L10 3" stroke="#22c55e" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </div>
+          <div>
+            <div style="font-size:12px;font-weight:700;color:#fff;">Contournement automatique</div>
+            <div style="font-size:10px;color:#555;margin-top:1px;">Évite les embouteillages en temps réel</div>
+          </div>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px;background:var(--blk2);border:1px solid var(--blk3);border-radius:11px;padding:10px 12px;">
+          <div style="width:22px;height:22px;background:rgba(34,197,94,0.15);border:1.5px solid #22c55e;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+            <svg width="11" height="11" viewBox="0 0 12 12" fill="none"><path d="M2 6L5 9L10 3" stroke="#22c55e" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </div>
+          <div>
+            <div style="font-size:12px;font-weight:700;color:#fff;">Alertes trafic en direct</div>
+            <div style="font-size:10px;color:#555;margin-top:1px;">Accidents, travaux, contrôles, inondations</div>
+          </div>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px;background:var(--blk2);border:1px solid var(--blk3);border-radius:11px;padding:10px 12px;">
+          <div style="width:22px;height:22px;background:rgba(34,197,94,0.15);border:1.5px solid #22c55e;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+            <svg width="11" height="11" viewBox="0 0 12 12" fill="none"><path d="M2 6L5 9L10 3" stroke="#22c55e" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </div>
+          <div>
+            <div style="font-size:12px;font-weight:700;color:#fff;">Points & récompenses chauffeur</div>
+            <div style="font-size:10px;color:#555;margin-top:1px;">Signalez des incidents et gagnez des bonus</div>
+          </div>
+        </div>
+      </div>
+      <button class="onb-btn" onclick="goTo('s-plan')"><svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M7 1L13 7L7 13M1 7H13" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>Commencer</button>
+    </div>
+  </div>
+
+  <!-- ══ PLAN ══ -->
+  <div id="s-plan" class="screen" style="flex-direction:column;">
+
+    <!-- ── ZONE HAUTE FIXE : header + champs + boutons ── -->
+    <div style="flex-shrink:0;background:var(--blk);z-index:10;position:relative;">
+
+      <!-- Header -->
+      <div class="app-header" style="border-bottom:1px solid var(--blk3);">
+        <button onclick="goTo('s-onboard')" style="background:var(--blk2);border:1px solid var(--blk3);border-radius:9px;padding:5px 10px;font-size:11px;color:#ccc;cursor:pointer;font-family:'DM Sans',sans-serif;display:flex;align-items:center;gap:4px;flex-shrink:0;">
+          <svg width="11" height="11" viewBox="0 0 12 12" fill="none"><path d="M8 2L4 6L8 10" stroke="#CCC" stroke-width="1.5" stroke-linecap="round"/></svg>Retour
+        </button>
+        <div class="h-logo" style="position:absolute;left:50%;transform:translateX(-50%);">SUNU<em>YOON</em></div>
+        <div class="header-actions">
+          <!-- Chauffeur -->
+          <div style="display:flex;align-items:center;gap:5px;background:var(--blk2);border:1px solid var(--blk3);border-radius:10px;padding:5px 9px;cursor:pointer;" onclick="goTo('s-driver')">
+            <svg width="13" height="13" viewBox="0 0 14 14" fill="none"><circle cx="7" cy="5" r="3" stroke="#BBB" stroke-width="1.3"/><path d="M2 13c0-2.76 2.24-5 5-5s5 2.24 5 5" stroke="#BBB" stroke-width="1.3" stroke-linecap="round"/></svg>
+            <span style="font-size:10px;font-weight:700;color:#bbb;">Chauffeur</span>
+          </div>
+          <!-- Ministère -->
+          <div style="display:flex;align-items:center;gap:5px;background:rgba(59,130,246,0.1);border:1px solid rgba(59,130,246,0.25);border-radius:10px;padding:5px 9px;cursor:pointer;" onclick="goTo('s-perturbations');setTimeout(()=>switchMinTab('stats'),150)">
+            <span style="font-size:12px;">🇸🇳</span>
+            <span style="font-size:9px;font-weight:800;color:#93c5fd;letter-spacing:.3px;">MINISTÈRE</span>
+            <div style="width:6px;height:6px;border-radius:50%;background:#22c55e;animation:blink 1.5s infinite;"></div>
+          </div>
+          <!-- Véhicule -->
+          <div class="v-pill" onclick="goTo('s-onboard')"><span id="hVE" style="font-size:14px;">🚗</span><svg width="9" height="6" viewBox="0 0 10 6" fill="none"><path d="M1 1L5 5L9 1" stroke="#777" stroke-width="1.5" stroke-linecap="round"/></svg></div>
+        </div>
+      </div>
+
+      <!-- Bandeau trafic -->
+      <div class="traffic-banner" style="margin:8px 14px 0;border-radius:10px;">
+        <div class="traffic-dot"></div>
+        <div class="traffic-text">Trafic dense — Av. Bourguiba · Dakar 34°C ☀️</div>
+        <div class="traffic-badge">Live</div>
+      </div>
+
+      <!-- Champs de saisie -->
+      <div style="padding:8px 14px 0;position:relative;">
+        <div class="route-card" style="position:relative;margin-bottom:0;">
+          <div class="route-card-inner">
+            <div class="inp-row">
+              <div class="dot dot-w"></div>
+              <input type="text" id="depInp" placeholder="📍 Ma position actuelle…" autocomplete="off"
+                oninput="onInpChange('dep',this.value)" onfocus="onInpFocus('dep')" onblur="onInpBlur('dep')"/>
+              <div class="inp-icon" onclick="locateMe()" style="cursor:pointer;">
+                <svg width="15" height="15" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="5.5" stroke="#D0021B" stroke-width="1.4"/><circle cx="8" cy="8" r="2.5" fill="#D0021B"/><line x1="8" y1="1" x2="8" y2="3.5" stroke="#D0021B" stroke-width="1.4" stroke-linecap="round"/><line x1="8" y1="12.5" x2="8" y2="15" stroke="#D0021B" stroke-width="1.4" stroke-linecap="round"/><line x1="1" y1="8" x2="3.5" y2="8" stroke="#D0021B" stroke-width="1.4" stroke-linecap="round"/><line x1="12.5" y1="8" x2="15" y2="8" stroke="#D0021B" stroke-width="1.4" stroke-linecap="round"/></svg>
+              </div>
+            </div>
+            <div class="inp-divider"><div class="inp-line"></div><div class="add-stop" onclick="addStop()"><svg width="13" height="13" viewBox="0 0 14 14" fill="none"><circle cx="7" cy="7" r="6" stroke="#D0021B" stroke-width="1.3"/><path d="M7 4V10M4 7H10" stroke="#D0021B" stroke-width="1.3" stroke-linecap="round"/></svg>Ajouter un arrêt</div></div>
+            <div id="stopsBox"></div>
+            <div class="inp-row">
+              <div class="dot dot-r"></div>
+              <input type="text" id="destInp" placeholder="Où voulez-vous aller ?" autocomplete="off"
+                oninput="onInpChange('dest',this.value)" onfocus="onInpFocus('dest')" onblur="onInpBlur('dest')"/>
+              <div class="inp-icon" onclick="clearDest()"><svg width="13" height="13" viewBox="0 0 14 14" fill="none"><path d="M3 3L11 11M11 3L3 11" stroke="#555" stroke-width="1.5" stroke-linecap="round"/></svg></div>
+            </div>
+          </div>
+          <div class="autocomplete-list" id="ac-dep"></div>
+          <div class="autocomplete-list" id="ac-dest"></div>
+        </div>
+      </div>
+
+      <!-- Options + bouton recherche -->
+      <div style="padding:8px 14px 12px;display:flex;gap:8px;align-items:center;">
+        <div class="option-tabs" style="flex:1;margin-bottom:0;">
+          <div class="opt-tab sel" onclick="selectMode(this,'peage')" style="border-color:#22c55e;background:rgba(34,197,94,0.08);padding:6px 4px;"><div class="opt-tab-icon">⚡</div><div class="opt-tab-label" style="color:#22c55e;">Avec péage</div></div>
+          <div class="opt-tab" onclick="selectMode(this,'sans')" style="padding:6px 4px;"><div class="opt-tab-icon">🛣️</div><div class="opt-tab-label">Sans péage</div></div>
+        </div>
+        <button onclick="searchRoute()" style="background:var(--r);color:#fff;border:none;border-radius:12px;padding:10px 16px;font-size:13px;font-weight:800;cursor:pointer;font-family:'DM Sans',sans-serif;display:flex;align-items:center;gap:6px;white-space:nowrap;box-shadow:0 4px 16px rgba(208,2,27,0.4);flex-shrink:0;">
+          <svg width="13" height="13" viewBox="0 0 14 14" fill="none"><path d="M7 1L13 7L7 13M1 7H13" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          Rechercher
+        </button>
+      </div>
+    </div>
+
+    <!-- ── CARTE EN BAS — prend tout l'espace restant ── -->
+    <div style="flex:1;position:relative;min-height:0;">
+      <div id="planMap" style="position:absolute;inset:0;"></div>
+      <!-- Label incidents sur la carte -->
+      <div style="position:absolute;bottom:20px;left:50%;transform:translateX(-50%);z-index:10;background:rgba(12,12,12,0.88);border:1px solid var(--blk3);border-radius:20px;padding:5px 14px;font-size:10px;color:#888;font-weight:600;white-space:nowrap;backdrop-filter:blur(8px);">
+        📍 Carte temps réel — Dakar
+      </div>
+    </div>
+    <div class="home-bar"><div class="home-ind"></div></div>
+  </div>
+
+  <!-- ══ RÉSULTAT ══ -->
+  <div id="s-result" class="screen">
+    <!-- CARTE PLEIN ÉCRAN -->
+    <div style="position:absolute;inset:0;z-index:0;">
+      <div id="resultMap" style="width:100%;height:100%;"></div>
+      <div class="map-loading" id="resultMapLoading"><div class="map-spinner"></div><div class="map-loading-text">Calcul de l'itinéraire…</div></div>
+    </div>
+
+    <!-- BOUTON RETOUR flottant -->
+    <button onclick="goTo('s-plan')" style="position:absolute;top:14px;left:14px;z-index:20;background:rgba(10,10,10,0.88);border:1px solid #333;border-radius:10px;padding:7px 12px;font-size:12px;color:#ccc;cursor:pointer;font-family:'DM Sans',sans-serif;display:flex;align-items:center;gap:5px;backdrop-filter:blur(10px);">
+      <svg width="11" height="11" viewBox="0 0 12 12" fill="none"><path d="M8 2L4 6L8 10" stroke="#CCC" stroke-width="1.5" stroke-linecap="round"/></svg>Retour
+    </button>
+
+    <!-- BOUTON SIGNALER sur carte résultat -->
+    <div onclick="openSignalModal()" style="position:absolute;bottom:200px;right:14px;z-index:20;background:#D0021B;border-radius:50px;padding:9px 13px;display:flex;align-items:center;gap:6px;cursor:pointer;box-shadow:0 4px 16px rgba(208,2,27,0.5);backdrop-filter:blur(6px);">
+      <span style="font-size:16px;">⚠️</span>
+      <span style="font-size:11px;font-weight:800;color:#fff;">Signaler</span>
+    </div>
+
+    <!-- BOUTONS CARTE flottants droite -->
+    <div style="position:absolute;top:14px;right:14px;z-index:20;display:flex;flex-direction:column;gap:7px;">
+      <div class="map-btn" id="btnCenter" title="Centrer" style="box-shadow:0 2px 10px rgba(0,0,0,0.5);">
+        <svg width="13" height="13" viewBox="0 0 14 14" fill="none"><circle cx="7" cy="7" r="5.5" stroke="white" stroke-width="1.3"/><circle cx="7" cy="7" r="2" fill="white"/></svg>
+      </div>
+      <div class="map-btn" onclick="resultMap_zoomIn()" style="box-shadow:0 2px 10px rgba(0,0,0,0.5);">
+        <svg width="13" height="13" viewBox="0 0 14 14" fill="none"><path d="M7 3V11M3 7H11" stroke="white" stroke-width="1.5" stroke-linecap="round"/></svg>
+      </div>
+      <div class="map-btn" onclick="resultMap_zoomOut()" style="box-shadow:0 2px 10px rgba(0,0,0,0.5);">
+        <svg width="13" height="13" viewBox="0 0 14 14" fill="none"><path d="M3 7H11" stroke="white" stroke-width="1.5" stroke-linecap="round"/></svg>
+      </div>
+    </div>
+
+    <!-- SHEET BAS compact — 2 routes -->
+    <div class="res-sheet" id="resSheet">
+      <div class="res-sheet-handle" onclick="toggleResSheet()"><div class="handle"></div></div>
+
+      <!-- BARRE MINI : 2 itinéraires + bouton GO -->
+      <div class="res-mini-bar" style="gap:8px;padding:0 12px 10px;">
+
+        <!-- Route 1 : Via Av. Bourguiba -->
+        <div class="res-route-pill sel" id="rpill1" onclick="selectRoutePill(0)" style="flex:1;padding:10px 8px;">
+          <div style="display:flex;align-items:center;gap:5px;margin-bottom:6px;">
+            <div style="width:8px;height:8px;border-radius:50%;background:#D0021B;flex-shrink:0;"></div>
+            <div style="font-size:8px;font-weight:700;color:#D0021B;letter-spacing:.3px;text-transform:uppercase;">Av. Bourguiba</div>
+          </div>
+          <div style="display:flex;align-items:baseline;gap:4px;">
+            <div class="rp-dur" id="dur1" style="font-size:22px;font-weight:800;color:#fff;line-height:1;">—</div>
+            <div style="font-size:10px;color:#555;margin-bottom:1px;">min</div>
+          </div>
+          <div style="display:flex;align-items:center;gap:5px;margin-top:4px;">
+            <div class="rp-lbl" id="dist1" style="font-size:11px;font-weight:600;color:#888;">—</div>
+            <div style="font-size:9px;color:#555;">km</div>
+            <div style="margin-left:auto;background:rgba(34,197,94,0.12);border-radius:4px;padding:1px 5px;font-size:8px;font-weight:700;color:#22c55e;">⚡ Recommandé</div>
+          </div>
+        </div>
+
+        <!-- Séparateur -->
+        <div style="width:1px;height:56px;background:#1e1e1e;flex-shrink:0;align-self:center;"></div>
+
+        <!-- Route 2 : Via Corniche Ouest -->
+        <div class="res-route-pill" id="rpill2" onclick="selectRoutePill(1)" style="flex:1;padding:10px 8px;">
+          <div style="display:flex;align-items:center;gap:5px;margin-bottom:6px;">
+            <div style="width:8px;height:8px;border-radius:50%;background:#22c55e;flex-shrink:0;"></div>
+            <div style="font-size:8px;font-weight:700;color:#22c55e;letter-spacing:.3px;text-transform:uppercase;">Corniche Ouest</div>
+          </div>
+          <div style="display:flex;align-items:baseline;gap:4px;">
+            <div class="rp-dur" id="dur2" style="font-size:22px;font-weight:800;color:#fff;line-height:1;">—</div>
+            <div style="font-size:10px;color:#555;margin-bottom:1px;">min</div>
+          </div>
+          <div style="display:flex;align-items:center;gap:5px;margin-top:4px;">
+            <div class="rp-lbl" id="dist2" style="font-size:11px;font-weight:600;color:#888;">—</div>
+            <div style="font-size:9px;color:#555;">km</div>
+            <div style="margin-left:auto;font-size:8px;color:#555;">Longe l'océan</div>
+          </div>
+        </div>
+
+        <!-- Bouton GO -->
+        <button onclick="goTo('s-nav')" style="flex-shrink:0;background:var(--r);color:#fff;border:none;border-radius:14px;width:52px;height:52px;font-size:18px;cursor:pointer;font-family:'DM Sans',sans-serif;box-shadow:0 6px 20px rgba(208,2,27,0.45);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;align-self:center;">
+          <span style="font-size:16px;">▶</span>
+          <span style="font-size:8px;font-weight:700;letter-spacing:.5px;">GO</span>
+        </button>
+      </div>
+
+      <!-- DÉTAIL EXPANDABLE — visible seulement quand sheet.expanded -->
+      <div class="res-sheet-body">
+        <div class="alert-row" style="margin-bottom:10px;"><div class="alert-dot"></div><div class="alert-text" id="routeAlert">Calcul en cours…</div></div>
+        <!-- Bandeau ministère (dans le détail, pas dans les pills) -->
+        <div class="min-banner" id="minBanner" style="margin:0 -12px 10px;border-radius:0;">
+          <div style="display:flex;align-items:center;gap:8px;flex:1;min-width:0;">
+            <span style="font-size:16px;">🇸🇳</span>
+            <div style="flex:1;min-width:0;">
+              <div style="font-size:9px;font-weight:800;color:#93c5fd;letter-spacing:.4px;">MINISTÈRE DES TRANSPORTS</div>
+              <div class="min-alert-text" id="minAlertText">Chargement…</div>
+            </div>
+            <div style="display:flex;align-items:center;gap:4px;background:rgba(208,2,27,0.15);border:1px solid rgba(208,2,27,0.3);border-radius:20px;padding:3px 8px;flex-shrink:0;">
+              <div style="width:5px;height:5px;border-radius:50%;background:#D0021B;animation:blink 1.5s infinite;"></div>
+              <span style="font-size:9px;font-weight:700;color:#ff5f6d;" id="minAlertCount">4 alertes</span>
+            </div>
+          </div>
+          <div class="min-alerts-scroll" id="minAlertsScroll"></div>
+        </div>
+        <button class="btn-main" onclick="goTo('s-nav')">
+          <svg width="13" height="13" viewBox="0 0 14 14" fill="none"><path d="M7 1L13 7L7 13M1 7H13" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          Démarrer la navigation
+        </button>
+      </div>
+    </div>
+    <div class="home-bar" style="position:absolute;bottom:0;left:0;right:0;z-index:22;"><div class="home-ind"></div></div>
+  </div>
+
+  <!-- ══ NAVIGATION ══ -->
+  <div id="s-nav" class="screen">
+    <div class="nav-screen-map">
+      <div id="navMap" class="map-container" style="position:absolute;inset:0;z-index:1;"></div>
+      <div class="map-loading" id="navMapLoading"><div class="map-spinner"></div><div class="map-loading-text">Navigation…</div></div>
+
+      <!-- BOUTON RETOUR — en bas à gauche, hors de la top card -->
+      <button onclick="stopNav()" style="position:absolute;bottom:80px;left:14px;z-index:20;background:rgba(10,10,10,0.9);border:1px solid rgba(255,255,255,0.12);border-radius:12px;padding:9px 14px;font-size:12px;font-weight:700;color:#ff5f6d;cursor:pointer;font-family:'DM Sans',sans-serif;display:flex;align-items:center;gap:6px;backdrop-filter:blur(12px);box-shadow:0 4px 16px rgba(0,0,0,0.4);">
+        <svg width="11" height="11" viewBox="0 0 12 12" fill="none"><path d="M8 2L4 6L8 10" stroke="#ff5f6d" stroke-width="1.8" stroke-linecap="round"/></svg>Arrêter
+      </button>
+
+      <!-- BOUTON VOCAL — en bas à droite, hors de la top card -->
+      <div id="navVoiceBtn" onclick="toggleVoice()" style="position:absolute;bottom:80px;right:14px;z-index:15;width:42px;height:42px;background:rgba(12,12,12,0.9);border:1px solid var(--blk4);border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;backdrop-filter:blur(8px);transition:all 0.2s;box-shadow:0 4px 16px rgba(0,0,0,0.4);">
+        <svg id="navVoiceIcon" width="18" height="18" viewBox="0 0 20 20" fill="none"><path d="M10 2a3 3 0 0 1 3 3v5a3 3 0 0 1-6 0V5a3 3 0 0 1 3-3z" stroke="white" stroke-width="1.5"/><path d="M5 10a5 5 0 0 0 10 0M10 15v3M8 18h4" stroke="white" stroke-width="1.5" stroke-linecap="round"/></svg>
+      </div>
+
+      <div class="nav-top-card" id="navTopCard">
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:6px;">
+          <!-- Icône direction -->
+          <div id="navArrowBox" style="width:46px;height:46px;background:var(--r);border-radius:12px;display:flex;align-items:center;justify-content:center;flex-shrink:0;box-shadow:0 0 14px rgba(208,2,27,0.4);">
+            <svg id="navArrowSvg" width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M12 4L12 20M12 4L6 10M12 4L18 10" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </div>
+          <div style="flex:1;min-width:0;">
+            <div class="nav-dir-main" id="navDirMain">Calcul…</div>
+            <div class="nav-dir-sub" id="navDirSub" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"></div>
+          </div>
+          <div>
+            <div class="nav-dist-badge">
+              <span id="navNextDist">—</span>
+            </div>
+          </div>
+        </div>
+        <!-- Prochaine instruction -->
+        <div id="navNextRow" style="font-size:11px;color:#555;border-top:1px solid #1a1a1a;padding-top:6px;display:flex;align-items:center;gap:6px;">
+          <span style="color:#444;">Ensuite :</span>
+          <span id="navNextInstr" style="color:#666;"></span>
+        </div>
+      </div>
+
+      <!-- BOUTON SIGNALEMENT — FAB rond sur la carte -->
+      <div id="signalBtn" onclick="openSignalModal()" title="Signaler un incident">
+        <span class="sb-icon">⚠️</span>
+        <span class="sb-label">Signaler</span>
+      </div>
+
+      <!-- MODAL SIGNALEMENT -->
+      <!-- PROGRESS STEPS -->
+      <div id="navStepsBar" style="position:absolute;left:14px;right:14px;top:130px;z-index:12;display:flex;gap:3px;opacity:0.7;">
+        <!-- filled dynamically -->
+      </div>
+
+      <div class="nav-bottom-bar">
+        <div class="nav-eta-block">
+          <div class="nav-eta-time" id="navDuration">—</div>
+          <div class="nav-eta-label">Arrivée · <span id="navDist">—</span> restants</div>
+        </div>
+        <div style="text-align:center;">
+          <div style="font-size:16px;font-weight:800;color:var(--wht);" id="navArrival">—</div>
+          <div style="font-size:10px;color:var(--gray);">Heure d'arrivée</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ CHAUFFEUR ══ -->
+  <div id="s-driver" class="screen">
+    <div class="app-header">
+      <button onclick="goTo('s-plan')" class="back-btn"><svg width="11" height="11" viewBox="0 0 12 12" fill="none"><path d="M8 2L4 6L8 10" stroke="#CCC" stroke-width="1.5" stroke-linecap="round"/></svg>Retour</button>
+      <div class="h-logo">SUNU<em>YOON</em></div>
+      <div class="header-actions">
+        <div class="icon-btn" onclick="showToast('Paramètres','⚙️')"><svg width="15" height="15" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="3" stroke="white" stroke-width="1.3"/><path d="M8 1v2M8 13v2M1 8h2M13 8h2M3.2 3.2l1.4 1.4M11.4 11.4l1.4 1.4M3.2 12.8l1.4-1.4M11.4 4.6l1.4-1.4" stroke="white" stroke-width="1.3" stroke-linecap="round"/></svg></div>
+      </div>
+    </div>
+    <!-- Barre de statut compacte (remplace la carte) -->
+    <div style="background:linear-gradient(135deg,rgba(34,197,94,0.08),rgba(34,197,94,0.04));border-bottom:1px solid rgba(34,197,94,0.15);padding:8px 14px;display:flex;align-items:center;gap:10px;flex-shrink:0;">
+      <div style="width:9px;height:9px;border-radius:50%;background:#22c55e;animation:blink 1.5s infinite;flex-shrink:0;"></div>
+      <div style="flex:1;"><span style="font-size:12px;font-weight:600;color:#22c55e;" id="statusText">En ligne</span><span style="font-size:11px;color:#555;margin-left:6px;" id="statusSub">· Disponible pour des courses</span></div>
+      <div style="background:var(--blk3);border-radius:8px;padding:4px 10px;font-size:10px;color:#aaa;cursor:pointer;" id="statusPill" onclick="toggleStatus()">Changer</div>
+      <div style="font-size:11px;color:#555;">📍 Plateau</div>
+    </div>
+    <div class="drv-body">
+
+      <!-- PROFIL COMPLET -->
+      <div class="drv-profile" style="margin-bottom:10px;">
+        <div class="drv-top">
+          <div class="avatar" style="width:56px;height:56px;font-size:20px;border:3px solid rgba(208,2,27,0.4);">MB</div>
+          <div style="flex:1;">
+            <div style="font-size:16px;font-weight:700;color:#fff;">Mamadou Baldé</div>
+            <div style="font-size:11px;color:#666;margin-top:1px;">📱 +221 77 412 38 91</div>
+            <div style="font-size:10px;color:#555;margin-top:1px;">🪪 DK-CHA-20241187</div>
+            <div class="drv-stars" style="margin-top:5px;">
+              ⭐⭐⭐⭐<span style="color:#aaa;font-size:12px;">★</span>
+              <span style="font-size:11px;color:#aaa;margin-left:3px;">4.8 / 5</span>
+              <div class="d-badge" style="margin-left:6px;">🥈 Argent</div>
+            </div>
+          </div>
+        </div>
+        <!-- Stats principales -->
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:10px;">
+          <div class="drv-info-cell" style="text-align:center;">
+            <div style="font-size:16px;font-weight:800;color:#fff;">247</div>
+            <div style="font-size:9px;color:#555;margin-top:1px;">Trajets</div>
+          </div>
+          <div class="drv-info-cell" style="text-align:center;">
+            <div style="font-size:16px;font-weight:800;color:#22c55e;">1 240</div>
+            <div style="font-size:9px;color:#555;margin-top:1px;">Points</div>
+          </div>
+          <div class="drv-info-cell" style="text-align:center;">
+            <div style="font-size:16px;font-weight:800;color:#F59E0B;">12</div>
+            <div style="font-size:9px;color:#555;margin-top:1px;">Signalements</div>
+          </div>
+          <div class="drv-info-cell" style="text-align:center;">
+            <div style="font-size:16px;font-weight:800;color:#60a5fa;">98%</div>
+            <div style="font-size:9px;color:#555;margin-top:1px;">Taux OK</div>
+          </div>
+        </div>
+        <!-- Infos véhicule -->
+        <div style="background:#1a1a1a;border-radius:10px;padding:10px 12px;display:flex;align-items:center;gap:10px;">
+          <span style="font-size:22px;" id="dVE">🚗</span>
+          <div style="flex:1;">
+            <div style="font-size:12px;font-weight:700;color:#fff;" id="dVehicle">Peugeot 308 — DK 3841 AB</div>
+            <div style="font-size:10px;color:#555;margin-top:1px;">Assurance · Visite technique ✅</div>
+          </div>
+          <div style="text-align:right;">
+            <div style="font-size:11px;color:#F59E0B;font-weight:700;">65%</div>
+            <div style="font-size:9px;color:#555;">Carburant</div>
+          </div>
+        </div>
+      </div>
+      <div class="pts-hero">
+        <div class="pts-circle" style="--pct:210deg;">
+          <div class="pts-inner">
+            <div class="pts-val" id="drvPoints">1 240</div>
+            <div class="pts-lbl-sm">PTS</div>
+          </div>
+        </div>
+        <div class="pts-info">
+          <div class="pts-level">🥈 Niveau Argent</div>
+          <div class="pts-next">260 pts pour l'Or 🥇</div>
+          <div class="pts-bar-wrap"><div class="pts-bar-fill" id="drvBar" style="width:83%;"></div></div>
+        </div>
+      </div>
+
+      <!-- BADGES -->
+      <div class="pts-badge-row">
+        <div class="pts-badge earned">🚦 Signaleur actif</div>
+        <div class="pts-badge earned">🛣️ 50 trajets</div>
+        <div class="pts-badge earned">⭐ 4.8 étoiles</div>
+        <div class="pts-badge">🏆 Top 10</div>
+      </div>
+
+      <!-- HISTORIQUE POINTS -->
+      <div class="pts-history">
+        <div class="pts-history-title">Historique des points</div>
+        <div class="pts-row"><div class="pts-row-icon">🚧</div><div class="pts-row-info"><div class="pts-row-label">Route barrée signalée</div><div class="pts-row-time">Aujourd'hui · 09:14</div></div><div class="pts-row-val">+20</div></div>
+        <div class="pts-row"><div class="pts-row-icon">✅</div><div class="pts-row-info"><div class="pts-row-label">Trajet complété sans incident</div><div class="pts-row-time">Aujourd'hui · 08:30</div></div><div class="pts-row-val">+15</div></div>
+        <div class="pts-row"><div class="pts-row-icon">🚨</div><div class="pts-row-info"><div class="pts-row-label">Accident signalé — Autoroute</div><div class="pts-row-time">Hier · 17:42</div></div><div class="pts-row-val">+30</div></div>
+        <div class="pts-row"><div class="pts-row-icon">🌊</div><div class="pts-row-info"><div class="pts-row-label">Inondation signalée · Yeumbeul</div><div class="pts-row-time">Hier · 05:20</div></div><div class="pts-row-val">+25</div></div>
+        <div class="pts-row"><div class="pts-row-icon">✅</div><div class="pts-row-info"><div class="pts-row-label">Trajet complété sans incident</div><div class="pts-row-time">Lundi · 14:05</div></div><div class="pts-row-val">+15</div></div>
+      </div>
+
+      <!-- RÉCOMPENSES -->
+      <div class="sec-lbl" style="margin-bottom:7px;">Récompenses disponibles</div>
+      <div class="rewards-grid">
+        <div class="reward-card">
+          <div class="reward-icon">⛽</div>
+          <div class="reward-name">Bon carburant 2 000F</div>
+          <div class="reward-cost">500 pts</div>
+          <button class="reward-btn" onclick="claimReward('Bon carburant 2 000F',500)">Échanger</button>
+        </div>
+        <div class="reward-card">
+          <div class="reward-icon">🅿️</div>
+          <div class="reward-name">Parking gratuit 1h</div>
+          <div class="reward-cost">300 pts</div>
+          <button class="reward-btn" onclick="claimReward('Parking gratuit 1h',300)">Échanger</button>
+        </div>
+        <div class="reward-card locked">
+          <div class="reward-icon">🎫</div>
+          <div class="reward-name">Pass péage 1 semaine</div>
+          <div class="reward-cost">2 000 pts · 🔒</div>
+          <button class="reward-btn" style="opacity:.4;" disabled>Bientôt</button>
+        </div>
+        <div class="reward-card locked">
+          <div class="reward-icon">🏆</div>
+          <div class="reward-name">Badge Top Chauffeur</div>
+          <div class="reward-cost">5 000 pts · 🔒</div>
+          <button class="reward-btn" style="opacity:.4;" disabled>Bientôt</button>
+        </div>
+      </div>
+
+      <button class="btn-main" onclick="goTo('s-plan')"><svg width="13" height="13" viewBox="0 0 14 14" fill="none"><path d="M7 1L13 7L7 13M1 7H13" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>Nouveau trajet</button>
+    </div>
+    <div class="home-bar"><div class="home-ind"></div></div>
+  </div>
+
+  <!-- ══ MINISTÈRE DES TRANSPORTS ══ -->
+  <div id="s-perturbations" class="screen">
+
+    <!-- HEADER -->
+    <div class="app-header" style="background:linear-gradient(135deg,#0a1628,#0d1f3c);border-bottom:1px solid rgba(59,130,246,0.2);">
+      <button onclick="goTo('s-plan')" style="background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.12);border-radius:10px;padding:7px 13px;font-size:12px;font-weight:600;color:#ccc;cursor:pointer;font-family:'DM Sans',sans-serif;display:flex;align-items:center;gap:6px;transition:all .15s;"><svg width="11" height="11" viewBox="0 0 12 12" fill="none"><path d="M8 2L4 6L8 10" stroke="#CCC" stroke-width="1.5" stroke-linecap="round"/></svg>Retour</button>
+      <div style="display:flex;align-items:center;gap:7px;">
+        <span style="font-size:18px;">🇸🇳</span>
+        <div>
+          <div style="font-size:12px;font-weight:800;color:#fff;letter-spacing:.5px;">MINISTÈRE</div>
+          <div style="font-size:9px;color:rgba(96,165,250,0.8);font-weight:600;">TRANSPORTS · SÉNÉGAL</div>
+        </div>
+      </div>
+      <div style="display:flex;align-items:center;gap:5px;background:rgba(34,197,94,0.12);border:1px solid rgba(34,197,94,0.3);border-radius:20px;padding:4px 9px;">
+        <div style="width:6px;height:6px;border-radius:50%;background:#22c55e;animation:blink 1.5s infinite;"></div>
+        <span style="font-size:9px;font-weight:700;color:#22c55e;">EN DIRECT</span>
+      </div>
+    </div>
+
+    <!-- MINISTRY TABS -->
+    <div style="display:flex;background:#0a0f1a;border-bottom:1px solid rgba(59,130,246,0.15);flex-shrink:0;">
+      <div class="min-tab active" id="mtab-stats" onclick="switchMinTab('stats')">📊 Tableau de bord</div>
+      <div class="min-tab" id="mtab-signal" onclick="switchMinTab('signal')">📝 Signaler</div>
+      <div class="min-tab" id="mtab-zones" onclick="switchMinTab('zones')">🗺️ Zones</div>
+      <div class="min-tab" id="mtab-alerts" onclick="switchMinTab('alerts')">🚨 Alertes</div>
+    </div>
+
+    <!-- ── TAB : TABLEAU DE BORD ── -->
+    <div class="min-panel active" id="mpanel-stats">
+      <div style="padding:14px 14px 0;">
+        <!-- KPI ROW -->
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px;">
+          <div class="min-kpi" style="border-color:rgba(208,2,27,0.3);">
+            <div class="min-kpi-val" style="color:#ff5f6d;" id="kpiUrgent">4</div>
+            <div class="min-kpi-lbl">Urgentes</div>
+          </div>
+          <div class="min-kpi" style="border-color:rgba(245,158,11,0.3);">
+            <div class="min-kpi-val" style="color:#F59E0B;" id="kpiWork">7</div>
+            <div class="min-kpi-lbl">En cours</div>
+          </div>
+          <div class="min-kpi" style="border-color:rgba(34,197,94,0.3);">
+            <div class="min-kpi-val" style="color:#22c55e;" id="kpiResolved">23</div>
+            <div class="min-kpi-lbl">Résolues</div>
+          </div>
+        </div>
+        <!-- CHART SIGNALEMENTS 7 JOURS -->
+        <div class="min-card" style="margin-bottom:10px;">
+          <div class="min-card-title">📈 Signalements — 7 derniers jours</div>
+          <div style="display:flex;align-items:flex-end;gap:5px;height:60px;margin-top:10px;">
+            <div class="bar-wrap"><div class="bar-col" style="height:40%;background:#D0021B;"></div><div class="bar-day">Lun</div></div>
+            <div class="bar-wrap"><div class="bar-col" style="height:65%;background:#D0021B;"></div><div class="bar-day">Mar</div></div>
+            <div class="bar-wrap"><div class="bar-col" style="height:30%;background:#F59E0B;"></div><div class="bar-day">Mer</div></div>
+            <div class="bar-wrap"><div class="bar-col" style="height:80%;background:#D0021B;"></div><div class="bar-day">Jeu</div></div>
+            <div class="bar-wrap"><div class="bar-col" style="height:55%;background:#F59E0B;"></div><div class="bar-day">Ven</div></div>
+            <div class="bar-wrap"><div class="bar-col" style="height:90%;background:#D0021B;"></div><div class="bar-day">Sam</div></div>
+            <div class="bar-wrap"><div class="bar-col" style="height:45%;background:#22c55e;"></div><div class="bar-day">Auj</div></div>
+          </div>
+        </div>
+        <!-- STATS PAR TYPE -->
+        <div class="min-card" style="margin-bottom:10px;">
+          <div class="min-card-title">📋 Répartition par type</div>
+          <div style="margin-top:10px;display:flex;flex-direction:column;gap:7px;">
+            <div class="stat-row"><span>🚨 Accidents</span><div class="stat-bar-wrap"><div class="stat-bar" style="width:62%;background:#D0021B;"></div></div><span style="color:#D0021B;font-weight:700;min-width:28px;text-align:right;">62%</span></div>
+            <div class="stat-row"><span>🏗️ Travaux</span><div class="stat-bar-wrap"><div class="stat-bar" style="width:24%;background:#F59E0B;"></div></div><span style="color:#F59E0B;font-weight:700;min-width:28px;text-align:right;">24%</span></div>
+            <div class="stat-row"><span>🌊 Inondations</span><div class="stat-bar-wrap"><div class="stat-bar" style="width:10%;background:#3B82F6;"></div></div><span style="color:#3B82F6;font-weight:700;min-width:28px;text-align:right;">10%</span></div>
+            <div class="stat-row"><span>🚫 Fermetures</span><div class="stat-bar-wrap"><div class="stat-bar" style="width:4%;background:#8B5CF6;"></div></div><span style="color:#8B5CF6;font-weight:700;min-width:28px;text-align:right;">4%</span></div>
+          </div>
+        </div>
+        <!-- TOP ZONES -->
+        <div class="min-card">
+          <div class="min-card-title">📍 Zones les plus touchées</div>
+          <div style="margin-top:8px;display:flex;flex-direction:column;gap:6px;">
+            <div class="zone-rank"><span class="zone-rank-num">1</span><span class="zone-rank-name">Autoroute AIBD</span><span class="zone-rank-count" style="color:#D0021B;">12 incidents</span></div>
+            <div class="zone-rank"><span class="zone-rank-num">2</span><span class="zone-rank-name">VDN / Keur Massar</span><span class="zone-rank-count" style="color:#F59E0B;">8 incidents</span></div>
+            <div class="zone-rank"><span class="zone-rank-num">3</span><span class="zone-rank-name">Yeumbeul Nord</span><span class="zone-rank-count" style="color:#F59E0B;">6 incidents</span></div>
+            <div class="zone-rank"><span class="zone-rank-num">4</span><span class="zone-rank-name">Médina / Av. Bourguiba</span><span class="zone-rank-count" style="color:#22c55e;">4 incidents</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── TAB : SIGNALER TRAVAUX ── -->
+    <div class="min-panel" id="mpanel-signal" style="overflow-y:auto;">
+      <div style="padding:14px;">
+        <div class="min-card" style="margin-bottom:10px;">
+          <div class="min-card-title" style="margin-bottom:10px;">🏗️ Signaler des travaux / perturbation</div>
+          <div style="display:flex;flex-direction:column;gap:8px;">
+            <div>
+              <div class="form-lbl">Type d'incident *</div>
+              <select id="sigType" class="form-select">
+                <option value="">— Sélectionner —</option>
+                <option>🏗️ Travaux de voirie</option>
+                <option>🚨 Accident de la route</option>
+                <option>🌊 Inondation / accumulation d'eau</option>
+                <option>🚫 Fermeture de route</option>
+                <option>🚧 Route barrée / déviation</option>
+                <option>⚡ Panne de feux de signalisation</option>
+                <option>🏚️ Effondrement / dégradation</option>
+              </select>
+            </div>
+            <div>
+              <div class="form-lbl">Localisation précise *</div>
+              <input type="text" id="sigLoc" class="form-input" placeholder="Ex : Av. Cheikh Anta Diop, UCAD, Dakar"/>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+              <div>
+                <div class="form-lbl">Date de début *</div>
+                <input type="date" id="sigDateStart" class="form-input"/>
+              </div>
+              <div>
+                <div class="form-lbl">Date de fin prévue</div>
+                <input type="date" id="sigDateEnd" class="form-input"/>
+              </div>
+            </div>
+            <div>
+              <div class="form-lbl">Niveau de gravité</div>
+              <div style="display:flex;gap:6px;margin-top:4px;">
+                <div class="grav-btn active" id="grav-info" onclick="setGrav('info')">ℹ️ Info</div>
+                <div class="grav-btn" id="grav-warn" onclick="setGrav('warn')">⚠️ Attention</div>
+                <div class="grav-btn" id="grav-urg" onclick="setGrav('urg')">🚨 Urgence</div>
+              </div>
+            </div>
+            <div>
+              <div class="form-lbl">Description</div>
+              <textarea id="sigDesc" class="form-input" rows="3" placeholder="Décrivez la situation, les voies affectées, les déviations recommandées…" style="resize:none;"></textarea>
+            </div>
+            <div>
+              <div class="form-lbl">Source / Organisme</div>
+              <input type="text" id="sigSource" class="form-input" placeholder="Ex : ONAS, Mairie de Dakar, Gendarmerie…"/>
+            </div>
+          </div>
+          <button class="btn-main" style="margin-top:12px;" onclick="submitSignalement()">
+            <svg width="13" height="13" viewBox="0 0 14 14" fill="none"><path d="M7 1L13 7L7 13M1 7H13" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            Soumettre au Ministère
+          </button>
+        </div>
+        <!-- SIGNALEMENTS RÉCENTS -->
+        <div class="min-card-title" style="margin-bottom:8px;">📋 Signalements récents</div>
+        <div id="sigHistory">
+          <div class="sig-item"><div class="sig-dot" style="background:#F59E0B;"></div><div class="sig-body"><div class="sig-title">🏗️ Travaux — Pont de Hann</div><div class="sig-meta">12 mai 2025 → 30 juin 2025 · ONAS</div><div class="sig-status warn">⚠️ En cours</div></div></div>
+          <div class="sig-item"><div class="sig-dot" style="background:#D0021B;"></div><div class="sig-body"><div class="sig-title">🚨 Accident — RN1 Thiès</div><div class="sig-meta">10 mai 2025 · Gendarmerie</div><div class="sig-status urg">🚨 Urgente</div></div></div>
+          <div class="sig-item"><div class="sig-dot" style="background:#22c55e;"></div><div class="sig-body"><div class="sig-title">🚫 Fermeture — Av. Bourguiba</div><div class="sig-meta">8 mai → 9 mai 2025 · Mairie</div><div class="sig-status ok">✅ Résolue</div></div></div>
+          <div class="sig-item"><div class="sig-dot" style="background:#3B82F6;"></div><div class="sig-body"><div class="sig-title">🌊 Inondation — Yeumbeul Nord</div><div class="sig-meta">Depuis le 9 mai 2025 · Préfecture</div><div class="sig-status urg">🚨 Active</div></div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── TAB : ZONES ── -->
+    <div class="min-panel" id="mpanel-zones" style="display:flex;flex-direction:column;">
+      <!-- Zone selector -->
+      <div style="padding:10px 14px;background:#0a0f1a;border-bottom:1px solid rgba(59,130,246,0.1);flex-shrink:0;">
+        <div class="form-lbl" style="margin-bottom:6px;">Sélectionner une zone de Dakar</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;" id="zoneGrid">
+          <div class="zone-btn active" id="zone-all" onclick="selectZone('all',[14.6937,-17.4441],12)">🗺️ Tout Dakar</div>
+          <div class="zone-btn" id="zone-plateau" onclick="selectZone('plateau',[14.6693,-17.4411],14)">🏙️ Plateau</div>
+          <div class="zone-btn" id="zone-medina" onclick="selectZone('medina',[14.6806,-17.4519],14)">🏘️ Médina</div>
+          <div class="zone-btn" id="zone-yoff" onclick="selectZone('yoff',[14.7571,-17.4629],14)">✈️ Yoff / AIBD</div>
+          <div class="zone-btn" id="zone-pikine" onclick="selectZone('pikine',[14.7474,-17.3934],13)">🏗️ Pikine</div>
+          <div class="zone-btn" id="zone-vdn" onclick="selectZone('vdn',[14.7200,-17.4400],13)">🛣️ VDN</div>
+        </div>
+      </div>
+      <!-- Map -->
+      <div style="flex:1;position:relative;min-height:0;">
+        <div id="perturbMap" style="position:absolute;inset:0;z-index:1;"></div>
+        <!-- Zone overlay label -->
+        <div id="zoneLabel" style="position:absolute;top:10px;left:50%;transform:translateX(-50%);z-index:10;background:rgba(10,15,26,0.9);border:1px solid rgba(59,130,246,0.3);border-radius:20px;padding:4px 14px;font-size:11px;font-weight:700;color:#93c5fd;white-space:nowrap;">📍 Tout Dakar — 14 incidents</div>
+      </div>
+      <!-- Zone summary -->
+      <div id="zoneSummary" style="padding:10px 14px;background:#0a0f1a;border-top:1px solid rgba(59,130,246,0.1);flex-shrink:0;display:flex;gap:10px;align-items:center;">
+        <div style="flex:1;font-size:11px;color:#aaa;" id="zoneDesc">Affichage de toutes les perturbations actives sur Dakar et sa banlieue.</div>
+        <div style="background:rgba(208,2,27,0.15);border:1px solid rgba(208,2,27,0.3);border-radius:8px;padding:5px 10px;text-align:center;flex-shrink:0;">
+          <div style="font-size:16px;font-weight:800;color:#ff5f6d;" id="zoneCount">14</div>
+          <div style="font-size:9px;color:#777;">incidents</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── TAB : ALERTES ── -->
+    <div class="min-panel" id="mpanel-alerts" style="overflow-y:auto;">
+      <div style="padding:10px 14px 0;">
+        <div style="display:flex;gap:6px;margin-bottom:10px;overflow-x:auto;padding-bottom:2px;">
+          <div class="pfil on" onclick="filterPerturb(this,true)">Tout</div>
+          <div class="pfil" onclick="filterPerturb(this,true)">🚨 Accidents</div>
+          <div class="pfil" onclick="filterPerturb(this,true)">🏗️ Travaux</div>
+          <div class="pfil" onclick="filterPerturb(this,true)">🌊 Inondations</div>
+          <div class="pfil" onclick="filterPerturb(this,true)">🚫 Fermetures</div>
+        </div>
+        <div id="alertsList"></div>
+        <div style="text-align:center;padding:10px 0 16px;font-size:10px;color:var(--gray);">Mise à jour toutes les 5 min · Ministère des Transports du Sénégal</div>
+      </div>
+    </div>
+
+    <div class="home-bar"><div class="home-ind"></div></div>
+  </div>
+
+  <div id="toast"><span id="toastIcon">✅</span><span id="toastText">Navigation démarrée !</span></div>
+  <div class="modal-overlay" id="notifsModal" onclick="closeNotifs(event)">
+    <div class="modal-sheet">
+      <div class="modal-title">Alertes trafic</div><div class="modal-close" onclick="closeNotifs()">×</div>
+      <div class="notif-item"><div class="notif-icon" style="background:var(--r-bg);">🚧</div><div><div class="notif-title">Travaux signalés</div><div class="notif-body">Chantier sur Av. Cheikh Anta Diop</div><div class="notif-time">Il y a 5 min</div></div></div>
+      <div class="notif-item"><div class="notif-icon" style="background:var(--amb-bg);">⚠️</div><div><div class="notif-title">Accident signalé</div><div class="notif-body">Collision mineure — Av. Faidherbe</div><div class="notif-time">Il y a 18 min</div></div></div>
+      <div class="notif-item"><div class="notif-icon" style="background:#0d0d1a;">🌊</div><div><div class="notif-title">Inondation — Yeumbeul Nord</div><div class="notif-body">Route de Rufisque impraticable</div><div class="notif-time">Depuis 04h30</div></div></div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ══ TILE LAYERS ══
+function darkTile() {
+  // Satellite Esri haute résolution — précision maximale
+  return L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { maxZoom:19 });
+}
+function satLabelsTile() {
+  // Labels sur satellite (noms de rues, quartiers)
+  return L.tileLayer('https://services.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}', { maxZoom:19, opacity:0.9 });
+}
+function streetTile() {
+  return L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom:19, subdomains:'abc' });
+}
+
+// ══ COORDS ══
+const DAKAR = [14.6937, -17.4441];
+const INCIDENTS = [
+  { latlng:[14.7100,-17.3800], color:'#D0021B', emoji:'🚨', label:'Accident Autoroute AIBD' },
+  { latlng:[14.6800,-17.4200], color:'#F59E0B', emoji:'📢', label:'Manifestation Corniche' },
+  { latlng:[14.7400,-17.3600], color:'#3B82F6', emoji:'🌊', label:'Inondation Yeumbeul Nord' },
+  { latlng:[14.7050,-17.4350], color:'#F59E0B', emoji:'🏗️', label:'Travaux Pont Hann' },
+  { latlng:[14.6928,-17.4674], color:'#F59E0B', emoji:'🚧', label:'Travaux Av. Cheikh Anta Diop' },
+];
+
+const maps = {};
+let routeCoords = null;
+let fromCoords = null, toCoords = null;
+let fromLabel = '', toLabel = '';
+let sheetOpen = true;
+
+// ══ GPS AUTO-DETECT on load ══
+function locateMe(silent=false) {
+  const inp = document.getElementById('depInp');
+  inp.value = ''; inp.placeholder = '📡 Localisation en cours…';
+  if (!navigator.geolocation) { inp.placeholder = 'Départ — saisissez une adresse'; if(!silent) showToast('GPS non supporté','⚠️'); return; }
+  navigator.geolocation.getCurrentPosition(async pos => {
+    fromCoords = [pos.coords.latitude, pos.coords.longitude];
+    try {
+      const r = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${fromCoords[0]}&lon=${fromCoords[1]}&format=json&accept-language=fr`);
+      const d = await r.json();
+      const name = d.address?.road ? (d.address.road + (d.address.suburb ? ', ' + d.address.suburb : '')) : 'Ma position GPS';
+      inp.value = name; fromLabel = name;
+    } catch(e) { inp.value = 'Ma position GPS'; fromLabel = 'Ma position GPS'; }
+    inp.placeholder = 'Départ';
+    if (!silent) showToast('Position détectée 📍','✅');
+  }, () => {
+    inp.placeholder = 'Départ — saisissez une adresse';
+    if (!silent) showToast('GPS non disponible — saisissez manuellement','⚠️');
+  }, { timeout:8000, maximumAge:30000 });
+}
+
+// ══ BASE LOCALE DAKAR (suggestions instantanées dès 1 lettre) ══
+const DAKAR_LOCAL = [
+  {n:'Plateau',s:'Centre-ville, Dakar',lat:14.6951,lon:-17.4439},{n:'Médina',s:'Médina, Dakar',lat:14.6917,lon:-17.4567},
+  {n:'Yoff',s:'Yoff, Dakar',lat:14.7445,lon:-17.4900},{n:'Ngor',s:'Ngor, Dakar',lat:14.7488,lon:-17.5107},
+  {n:'Almadies',s:'Les Almadies, Dakar',lat:14.7462,lon:-17.5198},{n:'Ouakam',s:'Ouakam, Dakar',lat:14.7313,lon:-17.5012},
+  {n:'Sacré-Cœur',s:'Sacré-Cœur, Dakar',lat:14.7189,lon:-17.4747},{n:'Mermoz',s:'Mermoz, Dakar',lat:14.7106,lon:-17.4783},
+  {n:'Liberté 6',s:'Liberté, Dakar',lat:14.7053,lon:-17.4628},{n:'Liberté 5',s:'Liberté, Dakar',lat:14.7031,lon:-17.4649},
+  {n:'Grand Dakar',s:'Grand Dakar, Dakar',lat:14.7020,lon:-17.4455},{n:'Parcelles Assainies',s:'Parcelles, Dakar',lat:14.7589,lon:-17.4315},
+  {n:'Guédiawaye',s:'Guédiawaye, Dakar',lat:14.7739,lon:-17.4038},{n:'Pikine',s:'Pikine, Dakar',lat:14.7513,lon:-17.3948},
+  {n:'Thiaroye',s:'Thiaroye, Dakar',lat:14.7274,lon:-17.3688},{n:'Rufisque',s:'Rufisque, Dakar',lat:14.7155,lon:-17.2756},
+  {n:'Mbao',s:'Mbao, Dakar',lat:14.7283,lon:-17.3200},{n:'Keur Massar',s:'Keur Massar, Dakar',lat:14.7820,lon:-17.3360},
+  {n:'Diamniadio',s:'Diamniadio, Dakar',lat:14.7220,lon:-17.1860},{n:'HLM',s:'HLM, Dakar',lat:14.7000,lon:-17.4600},
+  {n:'Fann',s:'Fann, Dakar',lat:14.6979,lon:-17.4629},{n:'Point E',s:'Point E, Dakar',lat:14.6975,lon:-17.4700},
+  {n:'Sicap Liberté',s:'Sicap, Dakar',lat:14.7055,lon:-17.4580},{n:'Dieuppeul',s:'Dieuppeul, Dakar',lat:14.7080,lon:-17.4620},
+  {n:'Colobane',s:'Colobane, Dakar',lat:14.6960,lon:-17.4520},{n:'Tilène',s:'Médina, Dakar',lat:14.6895,lon:-17.4548},
+  {n:'Hann',s:'Hann Bel Air, Dakar',lat:14.7110,lon:-17.4130},{n:'Gorée',s:'Île de Gorée, Dakar',lat:14.6674,lon:-17.4006},
+  {n:'Yeumbeul',s:'Yeumbeul, Dakar',lat:14.7750,lon:-17.3600},{n:'Cambérène',s:'Cambérène, Dakar',lat:14.7560,lon:-17.4560},
+  // Hôpitaux
+  {n:'Hôpital Principal',s:'Plateau, Dakar',lat:14.6957,lon:-17.4430},{n:'Hôpital Militaire',s:'Ouakam, Dakar',lat:14.7250,lon:-17.4900},
+  {n:'Hôpital Le Dantec',s:'Fann, Dakar',lat:14.6944,lon:-17.4643},{n:'Hôpital Abass Ndao',s:'Bel Air, Dakar',lat:14.6812,lon:-17.4265},
+  {n:'CHU de Fann',s:'Fann, Dakar',lat:14.6955,lon:-17.4670},{n:'Hôpital Grand Yoff',s:'Grand Yoff, Dakar',lat:14.7390,lon:-17.4600},
+  // Écoles & universités
+  {n:'Université UCAD',s:'Université Cheikh Anta Diop',lat:14.6929,lon:-17.4680},{n:'ISM',s:'Institut Sup. Management, Dakar',lat:14.6980,lon:-17.4710},
+  {n:'ESP',s:'École Supérieure Polytechnique',lat:14.6935,lon:-17.4692},{n:'ISEG',s:'ISEG Dakar, Fann',lat:14.6972,lon:-17.4650},
+  {n:'Lycée Lamine Guèye',s:'Plateau, Dakar',lat:14.6942,lon:-17.4420},{n:'Lycée Blaise Diagne',s:'Médina, Dakar',lat:14.6890,lon:-17.4540},
+  {n:'CFPT',s:'Centre Formation Prof. & Technique',lat:14.6850,lon:-17.4200},{n:'ESMTIC',s:'École Sup. Multimédia TIC, Dakar',lat:14.7060,lon:-17.4600},
+  // Marchés & commerces
+  {n:'Marché Sandaga',s:'Plateau, Dakar',lat:14.6965,lon:-17.4445},{n:'Marché Tilène',s:'Médina, Dakar',lat:14.6887,lon:-17.4544},
+  {n:'Marché HLM',s:'HLM, Dakar',lat:14.7010,lon:-17.4615},{n:'Marché Colobane',s:'Colobane, Dakar',lat:14.6960,lon:-17.4520},
+  {n:'Sea Plaza',s:'Corniche Ouest, Dakar',lat:14.7040,lon:-17.4855},{n:'Mall du Sénégal',s:'Diamniadio',lat:14.7140,lon:-17.1920},
+  // Axes & transport
+  {n:'Aéroport AIBD',s:'Aéroport International Blaise Diagne',lat:14.6729,lon:-17.0731},
+  {n:'Port de Dakar',s:'Port Autonome de Dakar',lat:14.6840,lon:-17.4320},
+  {n:'Gare de Dakar',s:'Gare ferroviaire, Dakar',lat:14.6972,lon:-17.4388},
+  {n:'VDN',s:'Voie de Dégagement Nord',lat:14.7230,lon:-17.4620},
+  {n:'Corniche Ouest',s:'Corniche Ouest, Dakar',lat:14.7050,lon:-17.4850},
+  {n:'Av. Bourguiba',s:'Avenue Bourguiba, Dakar',lat:14.6960,lon:-17.4460},
+  {n:'Stade LSS',s:'Stade Léopold Sédar Senghor',lat:14.6926,lon:-17.4752},
+  {n:'Grande Mosquée',s:'Plateau, Dakar',lat:14.6955,lon:-17.4452},
+  {n:'Présidence',s:'Présidence de la République',lat:14.6920,lon:-17.4380},
+];
+
+function localFilter(val) {
+  const v = val.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+  return DAKAR_LOCAL.filter(p => {
+    const t = (p.n+' '+p.s).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+    return t.includes(v);
+  }).slice(0,7);
+}
+
+// ══ NOMINATIM AUTOCOMPLETE — 1 lettre, base locale instantanée ══
+const acTimers = {};
+const acResults = {};
+
+async function geocode(query) {
+  const q = encodeURIComponent(query + ' Dakar Sénégal');
+  const url = `https://nominatim.openstreetmap.org/search?q=${q}&format=json&limit=5&countrycodes=sn&accept-language=fr&viewbox=-17.65,14.55,-17.10,14.85&bounded=1`;
+  const r = await fetch(url, { headers:{'Accept-Language':'fr','User-Agent':'SUNUYOON/1.0'} });
+  return await r.json();
+}
+
+function renderAcList(which, items) {
+  const listEl = document.getElementById('ac-' + which);
+  if (!items.length) { listEl.classList.remove('open'); return; }
+  acResults[which] = items;
+  listEl.innerHTML = items.map((r,i) => `
+    <div class="ac-item" onmousedown="pickResult('${which}',${i})">
+      <span style="font-size:13px;flex-shrink:0;">${r._emoji||'📍'}</span>
+      <div><div class="ac-item-main">${r._name}</div><div class="ac-item-sub">${r._sub}</div></div>
+    </div>`).join('');
+  listEl.classList.add('open');
+}
+
+function getEmoji(name, sub) {
+  const t = (name+sub).toLowerCase();
+  if(t.includes('hôpital')||t.includes('clinique')||t.includes('santé')) return '🏥';
+  if(t.includes('université')||t.includes('école')||t.includes('lycée')||t.includes('formation')||t.includes('ucad')||t.includes('ism')||t.includes('esp')) return '🎓';
+  if(t.includes('aéroport')||t.includes('aibd')) return '✈️';
+  if(t.includes('gare')||t.includes('station')) return '🚉';
+  if(t.includes('marché')||t.includes('mall')||t.includes('plaza')) return '🛍️';
+  if(t.includes('mosquée')||t.includes('mosque')) return '🕌';
+  if(t.includes('port')) return '⚓';
+  if(t.includes('stade')) return '🏟️';
+  if(t.includes('pharmacie')) return '💊';
+  if(t.includes('vdn')||t.includes('corniche')||t.includes('autoroute')||t.includes('avenue')||t.includes('route')) return '🛣️';
+  return '📍';
+}
+
+function onInpChange(which, val) {
+  clearTimeout(acTimers[which]);
+  const listEl = document.getElementById('ac-' + which);
+  if (!val) { listEl.classList.remove('open'); return; }
+  if (which === 'dep') fromCoords = null; else toCoords = null;
+
+  // 1. INSTANTANÉ : base locale Dakar (0ms, dès 1 lettre)
+  const local = localFilter(val);
+  if (local.length) {
+    renderAcList(which, local.map(p => ({ _name:p.n, _sub:p.s, lat:p.lat, lon:p.lon, _emoji:getEmoji(p.n,p.s) })));
+  } else {
+    listEl.innerHTML = `<div class="ac-loading"><div class="ac-spinner"></div><span style="font-size:11px;color:var(--gray);">Recherche…</span></div>`;
+    listEl.classList.add('open');
+  }
+
+  // 2. Nominatim après 300ms pour enrichir
+  if (val.length >= 2) {
+    acTimers[which] = setTimeout(async () => {
+      try {
+        const results = await geocode(val);
+        if (!results.length && !local.length) {
+          listEl.innerHTML = `<div class="ac-loading"><span style="font-size:11px;color:var(--gray);">Aucun résultat — essayez un autre nom</span></div>`;
+          return;
+        }
+        const seen = new Set(local.map(p => p.n.toLowerCase()));
+        const combined = local.map(p => ({ _name:p.n, _sub:p.s, lat:p.lat, lon:p.lon, _emoji:getEmoji(p.n,p.s) }));
+        results.forEach(r => {
+          const nm = (r.name||r.display_name.split(',')[0]).trim();
+          if (!seen.has(nm.toLowerCase())) {
+            seen.add(nm.toLowerCase());
+            const sub = r.display_name.split(',').slice(1,3).join(',').trim();
+            combined.push({ _name:nm, _sub:sub, lat:parseFloat(r.lat), lon:parseFloat(r.lon), _emoji:getEmoji(nm,sub) });
+          }
+        });
+        if (combined.length) renderAcList(which, combined.slice(0,8));
+      } catch(e) {}
+    }, 300);
+  }
+}
+
+function onInpFocus(which) {
+  const val = document.getElementById(which === 'dep' ? 'depInp' : 'destInp').value;
+  if (val.length >= 2 && acResults[which]?.length) document.getElementById('ac-' + which).classList.add('open');
+}
+function onInpBlur(which) {
+  setTimeout(() => document.getElementById('ac-' + which).classList.remove('open'), 200);
+}
+function pickResult(which, idx) {
+  const r = acResults[which][idx];
+  const name = r._name;
+  if (which === 'dep') {
+    document.getElementById('depInp').value = name;
+    fromCoords = [parseFloat(r.lat), parseFloat(r.lon)];
+    fromLabel = name;
+    if(maps.plan) maps.plan.setView(fromCoords, 14, {animate:true});
+  } else {
+    document.getElementById('destInp').value = name;
+    toCoords = [parseFloat(r.lat), parseFloat(r.lon)];
+    toLabel = name;
+    if(maps.plan) { maps.plan.setView(toCoords, 14, {animate:true}); }
+  }
+  document.getElementById('ac-' + which).classList.remove('open');
+  showToast(which==='dep'?'📍 Départ : '+name:'🎯 Destination : '+name,'✅');
+}
+
+// ══ GOOGLE MAPS URL BUILDER ══
+function buildGoogleMapsEmbedURL(from, to, mode='driving') {
+  // Using Google Maps embed directions mode
+  const origin = `${from[0]},${from[1]}`;
+  const dest   = `${to[0]},${to[1]}`;
+  return `https://www.google.com/maps/embed/v1/directions?key=AIzaSyD-9tSrke72PouQMnMX-a7eZSW0jkFMBWY&origin=${origin}&destination=${dest}&mode=${mode}&language=fr&region=sn`;
+}
+function buildGoogleMapsViewURL(lat, lng, zoom=14) {
+  return `https://www.google.com/maps/embed/v1/view?key=AIzaSyD-9tSrke72PouQMnMX-a7eZSW0jkFMBWY&center=${lat},${lng}&zoom=${zoom}&maptype=roadmap&language=fr`;
+}
+function openGoogleMaps() {
+  const from = fromCoords || DAKAR;
+  const to   = toCoords   || [14.6928,-17.4674];
+  const url  = `https://www.google.com/maps/dir/${from[0]},${from[1]}/${to[0]},${to[1]}/@${(from[0]+to[0])/2},${(from[1]+to[1])/2},14z`;
+  window.open(url,'_blank');
+}
+
+// ── DECODE POLYLINE ──
+function decodePoly(enc) {
+  let i=0, lat=0, lng=0; const out=[];
+  while(i<enc.length){
+    let s=0,r=0,b; do{b=enc.charCodeAt(i++)-63;r|=(b&0x1f)<<s;s+=5;}while(b>=0x20);
+    lat+=(r&1)?~(r>>1):(r>>1); s=0;r=0;
+    do{b=enc.charCodeAt(i++)-63;r|=(b&0x1f)<<s;s+=5;}while(b>=0x20);
+    lng+=(r&1)?~(r>>1):(r>>1);
+    out.push([lat/1e5,lng/1e5]);
+  }
+  return out;
+}
+
+// ── FETCH OSRM ROUTE ──
+// Calcule une route via un waypoint intermédiaire (3 points)
+async function fetchRouteVia(from, via, to) {
+  try {
+    const url = `https://router.project-osrm.org/route/v1/driving/${from[1]},${from[0]};${via[1]},${via[0]};${to[1]},${to[0]}?overview=full&geometries=geojson`;
+    const r = await fetch(url);
+    const d = await r.json();
+    if (!d.routes || !d.routes.length) return null;
+    return d.routes.map(route => ({
+      duration: Math.round(route.duration/60),
+      distance: (route.distance/1000).toFixed(1),
+      coords: route.geometry.coordinates.map(c => [c[1],c[0]]),
+    }));
+  } catch(e) { return null; }
+}
+
+async function fetchRoute(from, to) {
+  try {
+    const url = `https://router.project-osrm.org/route/v1/driving/${from[1]},${from[0]};${to[1]},${to[0]}?overview=full&geometries=polyline&alternatives=true`;
+    const r = await fetch(url);
+    const d = await r.json();
+    if(d.code==='Ok') return d.routes.map(rt => ({
+      coords: decodePoly(rt.geometry),
+      duration: Math.round(rt.duration/60),
+      distance: (rt.distance/1000).toFixed(1)
+    }));
+  } catch(e){}
+  return null;
+}
+
+// ── LEAFLET HELPER ──
+function mkMap(id, center, zoom, opts={}) {
+  const m = L.map(id, { zoomControl:false, attributionControl:false, ...opts }).setView(center, zoom);
+  darkTile().addTo(m);      // Esri satellite
+  satLabelsTile().addTo(m); // Labels par-dessus
+  return m;
+}
+function mkMarker(latlng, color, size=14) {
+  return L.divIcon({
+    html:`<div style="width:${size}px;height:${size}px;background:${color};border-radius:50%;border:3px solid white;box-shadow:0 0 12px ${color}99;"></div>`,
+    iconSize:[size,size], iconAnchor:[size/2,size/2], className:''
+  });
+}
+function addRoute(map, coords, color='#D0021B') {
+  L.polyline(coords, {color,weight:14,opacity:0.15}).addTo(map);
+  L.polyline(coords, {color,weight:5,opacity:0.95,lineCap:'round',lineJoin:'round'}).addTo(map);
+}
+function hideLoading(id) {
+  const el=document.getElementById(id); if(!el)return;
+  el.classList.add('hidden'); setTimeout(()=>el.style.display='none',400);
+}
+
+// ══ DRIVER POINTS ══
+let driverPoints = 1240;
+const SIGNAL_PTS = { 'Route barrée':20, 'Accident':30, 'Inondation':25, 'Travaux':20, 'Panne/Obstacle':10, 'Obstacle route':15 };
+
+function openSignalModal() {
+  const now = new Date();
+  const ts = document.getElementById('signalTimestamp');
+  if (ts) ts.textContent = now.toLocaleDateString('fr-FR') + ' à ' + now.toLocaleTimeString('fr-FR', {hour:'2-digit',minute:'2-digit',second:'2-digit'});
+  document.getElementById('signalModal').classList.add('open');
+}
+function closeSignalModal(e) { if(!e || e.target===document.getElementById('signalModal')) document.getElementById('signalModal').classList.remove('open'); }
+
+function doSignal(icon, label, pts) {
+  closeSignalModal();
+  const now = new Date();
+  const time = now.toLocaleTimeString('fr-FR', {hour:'2-digit', minute:'2-digit'});
+  // Ajouter à l'historique EN ATTENTE (pas de points encore)
+  const hist = document.getElementById('ptsHistoryList');
+  if (hist) {
+    const row = document.createElement('div');
+    row.className = 'pts-row';
+    row.innerHTML = `<div class="pts-row-icon">${icon}</div><div class="pts-row-info"><div class="pts-row-label">${label} signalé — <span style="color:#F59E0B;font-size:9px;">⏳ En attente de vérification</span></div><div class="pts-row-time">Aujourd'hui · ${time}</div></div><div class="pts-row-val" style="color:#555;">+${pts}</div>`;
+    hist.prepend(row);
+  }
+  showToast(`📋 ${label} signalé — En attente validation service client`, '⏳');
+  // Notification de confirmation
+  setTimeout(() => showToast('✅ Signalement reçu · Référence #SY'+Math.floor(Math.random()*90000+10000), '📨'), 1800);
+}
+
+function claimReward(name, cost) {
+  if(driverPoints < cost) { showToast('Points insuffisants','❌'); return; }
+  driverPoints -= cost;
+  document.getElementById('drvPoints').textContent = driverPoints.toLocaleString('fr-FR');
+  showToast('🎉 Récompense débloquée : ' + name, '✅');
+}
+
+// ══ MAP TABS (Google Maps / Mapbox / Ministère) ══
+function switchMapTab(tab) {
+  document.querySelectorAll('.map-tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.map-layer').forEach(l => l.classList.remove('active'));
+  document.getElementById('tab-' + tab).classList.add('active');
+  document.getElementById('mapLayer-' + tab).classList.add('active');
+  if(tab === 'mb' && maps.result) setTimeout(() => maps.result.invalidateSize(), 80);
+  if(tab === 'gm') {
+    const gm = document.getElementById('gmIframe');
+    if(fromCoords && toCoords && !gm.src.includes('maps.google')) {
+      gm.src = buildGoogleMapsEmbedURL(fromCoords, toCoords);
+      document.getElementById('gmPlaceholder').style.display = 'none';
+    }
+  }
+  if(tab === 'min') renderMinistryAlerts();
+}
+
+const MINISTRY_ALERTS = [
+  { icon:'🚨', title:'Accident — Autoroute AIBD', loc:'PK 22, Autoroute AIBD', desc:'Collision grave — voie droite bloquée. Secours sur place.', delay:'+35 min', time:'Il y a 12 min', src:'Gendarmerie Nationale', cls:'urgent', badge:'URGENTE' },
+  { icon:'🚧', title:'Travaux — Av. Cheikh Anta Diop', loc:'Av. Cheikh Anta Diop, UCAD', desc:'Réfection réseau assainissement. Une voie ouverte. Durée : 3 semaines.', delay:'+8 min', time:'Depuis 3 jours', src:'ONAS', cls:'warning', badge:'TRAVAUX' },
+  { icon:'🌊', title:'Inondation — Yeumbeul Nord', loc:'Route de Rufisque', desc:'Hauteur d\'eau : 60 cm. Route fermée. Pompiers mobilisés.', delay:'Route fermée', time:'Depuis 04h30', src:'Préfecture de Dakar', cls:'urgent', badge:'URGENTE' },
+  { icon:'🚓', title:'Contrôle de police — VDN', loc:'VDN, échangeur Keur Massar', desc:'Contrôle routier en cours. Réduire la vitesse.', delay:'+5 min', time:'Il y a 30 min', src:'Police Nationale', cls:'', badge:'INFO' },
+];
+let userAlerts = [];
+
+function renderMinistryAlerts(newIcon, newLabel) {
+  const el = document.getElementById('ministryRouteAlerts');
+  if(!el) return;
+  if(newIcon && newLabel) userAlerts.unshift({ icon:newIcon, title:newLabel+' signalé par un chauffeur', loc:'Sur votre itinéraire', desc:'Signalement communautaire en attente de validation.', delay:'À éviter', time:'À l\'instant', src:'Communauté SUNUYOON', cls:'warning', badge:'COMMUNAUTÉ' });
+  const all = [...userAlerts, ...MINISTRY_ALERTS];
+  el.innerHTML = all.map(a => `
+    <div class="perturb-card ${a.cls}" style="margin-bottom:8px;">
+      <div class="pc-top"><div class="pc-icon ${a.cls==='urgent'?'red':a.cls==='warning'?'amber':'blue'}">${a.icon}</div><div><div class="pc-title">${a.title}</div></div><div class="pc-badge ${a.cls==='urgent'?'urgente':''}">${a.badge}</div></div>
+      <div class="pc-location">📍 ${a.loc}</div>
+      <div class="pc-desc">${a.desc}</div>
+      <div class="pc-impact">⏱️ <span class="pc-impact-txt">${a.delay}</span></div>
+      <div class="pc-meta" style="margin-top:6px;"><span class="pc-time">${a.time}</span><span class="pc-source">${a.src}</span></div>
+    </div>`).join('');
+}
+
+// ══ INIT RESULT MAP (with tab reset) ══
+async function initResultMap() {
+  const from = fromCoords || [14.6806, -17.4444];
+  const to   = toCoords   || [14.6928, -17.4674];
+  const mid  = [(from[0]+to[0])/2, (from[1]+to[1])/2];
+
+  if (!maps.result) {
+    maps.result = mkMap('resultMap', mid, 13);
+  } else {
+    maps.result.setView(mid, 13);
+    maps.result.eachLayer(l => { if (l instanceof L.Polyline || l instanceof L.Marker || l instanceof L.CircleMarker) maps.result.removeLayer(l); });
+  }
+  allRouteCoords = [];
+  routeLayers = [];
+
+  document.getElementById('btnCenter').onclick = () => {
+    if(allRouteCoords[0]) maps.result.fitBounds(L.latLngBounds(allRouteCoords[0]),{padding:[40,40],paddingBottomRight:[40,170]});
+  };
+
+  const routes = await fetchRoute(from, to);
+  if (routes && routes.length) {
+    const r0 = routes[0];
+    routeCoords = r0.coords;
+    const dur1 = r0.duration;
+    const dist1 = parseFloat(r0.distance);
+
+    // Route 2 uniquement : via Corniche Ouest
+    const wptCorniche = [14.7050, -17.4850];
+    const r1res = await fetchRouteVia(from, wptCorniche, to);
+    const coords0 = r0.coords;
+    const coords1 = (r1res && r1res.length) ? r1res[0].coords : coords0;
+    allRouteCoords = [coords0, coords1];
+    const dur2  = (r1res && r1res.length) ? r1res[0].duration : Math.round(dur1*1.1);
+    const dist2 = (r1res && r1res.length) ? parseFloat(r1res[0].distance) : (dist1*1.12).toFixed(1);
+
+    // Tracer route 2 d'abord (dessous, verte pointillée)
+    const g1 = L.polyline(coords1, {color:'#22c55e', weight:7, opacity:0.12, lineCap:'round', lineJoin:'round'}).addTo(maps.result);
+    const l1 = L.polyline(coords1, {color:'#22c55e', weight:3.5, opacity:0.6, lineCap:'round', lineJoin:'round', dashArray:'10 6'}).addTo(maps.result);
+    routeLayers[1] = [g1, l1];
+
+    // Tracer route 1 par-dessus (rouge, pleine, dominante)
+    const g0 = L.polyline(coords0, {color:'#D0021B', weight:12, opacity:0.13, lineCap:'round', lineJoin:'round'}).addTo(maps.result);
+    const l0 = L.polyline(coords0, {color:'#D0021B', weight:5, opacity:0.95, lineCap:'round', lineJoin:'round'}).addTo(maps.result);
+    routeLayers[0] = [g0, l0];
+    l0.bringToFront();
+
+    // Pills
+    document.getElementById('dur1').textContent  = dur1+' min';
+    document.getElementById('dist1').textContent = dist1+' km';
+    document.getElementById('dur2').textContent  = dur2+' min';
+    document.getElementById('dist2').textContent = dist2+' km';
+    document.getElementById('routeAlert').textContent = 'Ralentissement sur route principale (+'+Math.round(dur1*0.15)+' min estimé)';
+    document.getElementById('navDuration').textContent = dur1+' min';
+    document.getElementById('navDist').textContent = dist1+' km';
+    const arr = new Date(Date.now()+dur1*60000);
+    document.getElementById('navArrival').textContent = arr.getHours().toString().padStart(2,'0')+':'+arr.getMinutes().toString().padStart(2,'0');
+
+    maps.result.fitBounds(L.latLngBounds(coords0), {padding:[50,50], paddingBottomRight:[50,160]});
+  } else {
+    document.getElementById('routeAlert').textContent = 'Connexion requise pour OSRM';
+  }
+
+  // Incidents
+  INCIDENTS.forEach(inc => {
+    const icon = L.divIcon({ html:`<div style="background:${inc.color};color:white;border-radius:50%;width:24px;height:24px;display:flex;align-items:center;justify-content:center;font-size:12px;border:2px solid white;box-shadow:0 2px 6px rgba(0,0,0,0.5);">${inc.emoji}</div>`, iconSize:[24,24], iconAnchor:[12,12], className:'' });
+    L.marker(inc.latlng, {icon}).addTo(maps.result).bindPopup(inc.label);
+  });
+  L.circleMarker(from,{radius:10,color:'#fff',fillColor:'#fff',fillOpacity:1,weight:3,className:''}).addTo(maps.result);
+  L.circleMarker(to,  {radius:10,color:'#fff',fillColor:'#D0021B',fillOpacity:1,weight:3}).addTo(maps.result);
+
+  hideLoading('resultMapLoading');
+  renderMinistryAlerts();
+}
+
+// ══ INIT NAV MAP ══
+async function initNavMap() {
+  if (maps.nav) { maps.nav.invalidateSize(); return; }
+  const from = fromCoords || [14.6806,-17.4444];
+  const to   = toCoords   || [14.6928,-17.4674];
+  const coords = routeCoords || [from,to];
+  // Démarrer au point de départ, zoom 17 pour suivre la rue précisément
+  const startPt = coords[0];
+
+  maps.nav = L.map('navMap', { zoomControl:false, attributionControl:false }).setView(startPt, 17);
+  // Satellite + labels
+  darkTile().addTo(maps.nav);
+  satLabelsTile().addTo(maps.nav);
+
+  // Bouton bascule Satellite ↔ Rue
+  const tileToggle = L.control({ position:'bottomright' });
+  tileToggle.onAdd = () => {
+    const d = L.DomUtil.create('div');
+    d.innerHTML = `<div id="tileToggleBtn" onclick="toggleNavTile()" style="background:rgba(10,10,10,0.92);border:1px solid #333;border-radius:10px;padding:7px 11px;font-size:11px;font-weight:700;color:#fff;cursor:pointer;backdrop-filter:blur(8px);white-space:nowrap;box-shadow:0 2px 8px rgba(0,0,0,0.5);">🛰️ Satellite</div>`;
+    L.DomEvent.disableClickPropagation(d);
+    return d;
+  };
+  tileToggle.addTo(maps.nav);
+
+  window.toggleNavTile = () => {
+    isSat = !isSat;
+    if (isSat) { streetBase.remove(); satBase.addTo(maps.nav); satLbl.addTo(maps.nav); document.getElementById('tileToggleBtn').textContent='🛰️ Satellite'; }
+    else { satBase.remove(); satLbl.remove(); streetBase.addTo(maps.nav); document.getElementById('tileToggleBtn').textContent='🗺️ Carte'; }
+  };
+
+  // route glow + line
+  L.polyline(coords,{color:'#D0021B',weight:20,opacity:0.18}).addTo(maps.nav);
+  L.polyline(coords,{color:'#D0021B',weight:7,opacity:1,lineCap:'round',lineJoin:'round'}).addTo(maps.nav);
+  // destination marker
+  L.circleMarker(to,{radius:9,color:'#fff',fillColor:'#22c55e',fillOpacity:1,weight:3}).addTo(maps.nav);
+  navMarker = L.marker(coords[0], {icon:mkMarker('#D0021B',22)}).addTo(maps.nav);
+
+  // Fetch OSRM steps for voice guidance
+  try {
+    const url = `https://router.project-osrm.org/route/v1/driving/${from[1]},${from[0]};${to[1]},${to[0]}?overview=full&geometries=polyline&steps=true`;
+    const r = await fetch(url);
+    const d = await r.json();
+    if (d.code==='Ok' && d.routes[0].legs[0].steps) navSteps = buildSteps(d.routes[0].legs[0].steps);
+  } catch(e){}
+
+  if (!navSteps.length) {
+    navSteps = [
+      {instruction:'Démarrer',voiceText:'Démarrez sur Av. Bourguiba',name:'Av. Bourguiba',distStr:'200 m',dist:200,dir:'straight'},
+      {instruction:'Tourner à gauche',voiceText:'Tournez à gauche sur Corniche Ouest',name:'Corniche Ouest',distStr:'600 m',dist:600,dir:'left'},
+      {instruction:'Continuer tout droit',voiceText:'Continuez tout droit sur Av. Cheikh Anta Diop',name:'Av. Cheikh Anta Diop',distStr:'1.2 km',dist:1200,dir:'straight'},
+      {instruction:'Tourner à droite',voiceText:'Tournez à droite vers la destination',name:'',distStr:'300 m',dist:300,dir:'right'},
+      {instruction:'🏁 Arrivée',voiceText:'Vous êtes arrivé à destination',name:'',distStr:'0 m',dist:0,dir:'arrive'},
+    ];
+  }
+  navStepIdx=0; navPolyIdx=0;
+  showStep(0);
+
+  clearInterval(navSimInterval);
+  navSimInterval = setInterval(()=>{
+    navPolyIdx = Math.min(navPolyIdx+1, coords.length-1);
+    navMarker.setLatLng(coords[navPolyIdx]);
+    maps.nav.panTo(coords[navPolyIdx], {animate:true, duration:1.0});
+    const progress = navPolyIdx/(coords.length-1);
+    const exp = Math.floor(progress*navSteps.length);
+    if(exp>navStepIdx&&exp<navSteps.length) showStep(exp);
+    if(navPolyIdx>=coords.length-1){ clearInterval(navSimInterval); showStep(navSteps.length-1); setTimeout(()=>showToast('Vous êtes arrivé ! 🏁','✅'),1000); }
+  },1200);
+
+  hideLoading('navMapLoading');
+  if('speechSynthesis' in window){ window.speechSynthesis.getVoices(); setTimeout(()=>{ if(navSteps.length&&voiceEnabled) speak(navSteps[0].voiceText); },1500); }
+}
+
+// ══ INIT DRIVER MAP ══
+function initDriverMap() {
+  if (maps.driver) { maps.driver.invalidateSize(); hideLoading('driverMapLoading'); return; }
+  maps.driver = mkMap('driverMap', DAKAR, 14);
+  INCIDENTS.forEach(inc => {
+    const icon = L.divIcon({
+      html:`<div style="background:${inc.color};color:white;border-radius:50%;width:28px;height:28px;display:flex;align-items:center;justify-content:center;font-size:14px;border:2px solid rgba(255,255,255,0.3);box-shadow:0 2px 8px rgba(0,0,0,0.5);">${inc.emoji}</div>`,
+      iconSize:[28,28], iconAnchor:[14,14], className:''
+    });
+    L.marker(inc.latlng, {icon}).addTo(maps.driver).bindPopup(inc.label);
+  });
+  L.circleMarker(DAKAR,{radius:11,color:'#22c55e',fillColor:'#22c55e',fillOpacity:0.9,weight:3}).addTo(maps.driver);
+  hideLoading('driverMapLoading');
+}
+
+// ══ MINISTRY TABS ══
+function switchMinTab(tab) {
+  document.querySelectorAll('.min-tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.min-panel').forEach(p => p.classList.remove('active'));
+  document.getElementById('mtab-' + tab).classList.add('active');
+  document.getElementById('mpanel-' + tab).classList.add('active');
+  if (tab === 'zones') { setTimeout(() => { if(maps.perturb) maps.perturb.invalidateSize(); else initPerturbMap(); }, 80); }
+  if (tab === 'alerts') renderAlertsList();
+}
+
+// ══ ZONE SELECTION ══
+const ZONE_DATA = {
+  all:     { label:'Tout Dakar', count:14, desc:'Toutes les perturbations actives sur Dakar et sa banlieue.' },
+  plateau: { label:'Plateau', count:3, desc:'3 incidents actifs sur le Plateau et la Corniche.' },
+  medina:  { label:'Médina', count:4, desc:'4 incidents : travaux Av. Bourguiba + 3 signalements.' },
+  yoff:    { label:'Yoff / AIBD', count:5, desc:'5 incidents dont accident grave sur Autoroute AIBD.' },
+  pikine:  { label:'Pikine', count:6, desc:'6 incidents : inondations Yeumbeul + travaux VDN.' },
+  vdn:     { label:'VDN', count:2, desc:'2 incidents sur la VDN : contrôle police + chantier.' },
+};
+function selectZone(key, center, zoom) {
+  document.querySelectorAll('.zone-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('zone-' + key).classList.add('active');
+  const z = ZONE_DATA[key];
+  document.getElementById('zoneLabel').textContent = '📍 ' + z.label + ' — ' + z.count + ' incidents';
+  document.getElementById('zoneCount').textContent = z.count;
+  document.getElementById('zoneDesc').textContent = z.desc;
+  if (maps.perturb) maps.perturb.setView(center, zoom, {animate:true});
+  else initPerturbMap(center, zoom);
+}
+
+// ══ MINISTRY FORM ══
+let currentGrav = 'info';
+function setGrav(g) {
+  currentGrav = g;
+  ['info','warn','urg'].forEach(x => document.getElementById('grav-'+x).classList.remove('active'));
+  document.getElementById('grav-' + g).classList.add('active');
+}
+function submitSignalement() {
+  const type = document.getElementById('sigType').value;
+  const loc  = document.getElementById('sigLoc').value;
+  const ds   = document.getElementById('sigDateStart').value;
+  const de   = document.getElementById('sigDateEnd').value;
+  const desc = document.getElementById('sigDesc').value;
+  const src  = document.getElementById('sigSource').value;
+  if (!type || !loc || !ds) { showToast('Remplissez les champs obligatoires *','⚠️'); return; }
+  const icon = type.charAt(0);
+  const title = type + ' — ' + loc;
+  const dateStr = ds + (de ? ' → ' + de : '');
+  const statusClass = currentGrav === 'urg' ? 'urg' : currentGrav === 'warn' ? 'warn' : 'ok';
+  const statusTxt = currentGrav === 'urg' ? '🚨 Urgente' : currentGrav === 'warn' ? '⚠️ En cours' : 'ℹ️ Info';
+  const dotColor = currentGrav === 'urg' ? '#D0021B' : currentGrav === 'warn' ? '#F59E0B' : '#22c55e';
+  const newItem = document.createElement('div');
+  newItem.className = 'sig-item';
+  newItem.innerHTML = `<div class="sig-dot" style="background:${dotColor};"></div><div class="sig-body"><div class="sig-title">${type} — ${loc}</div><div class="sig-meta">${dateStr}${src ? ' · ' + src : ''}</div><div class="sig-status ${statusClass}">${statusTxt}</div></div>`;
+  document.getElementById('sigHistory').prepend(newItem);
+  // Clear form
+  document.getElementById('sigType').value = '';
+  document.getElementById('sigLoc').value = '';
+  document.getElementById('sigDateStart').value = '';
+  document.getElementById('sigDateEnd').value = '';
+  document.getElementById('sigDesc').value = '';
+  document.getElementById('sigSource').value = '';
+  // Update KPI
+  const ku = document.getElementById('kpiWork');
+  ku.textContent = parseInt(ku.textContent) + 1;
+  // Add to map
+  if (maps.perturb) {
+    const col = dotColor;
+    const mk = L.divIcon({ html:`<div style="background:${col};color:white;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:13px;border:2px solid white;">${icon}</div>`, iconSize:[26,26], iconAnchor:[13,13], className:'' });
+    L.marker(DAKAR, {icon:mk}).addTo(maps.perturb).bindPopup(type + ' — ' + loc);
+  }
+  showToast('✅ Signalement soumis au Ministère !', '🇸🇳');
+  switchMinTab('stats');
+}
+
+// ══ ALERTS LIST ══
+const ALL_ALERTS = [
+  { icon:'🚨', cls:'urgent', badge:'URGENTE', type:'accident', title:'Accident — Autoroute AIBD', loc:'PK 22, Autoroute AIBD', desc:'Collision grave — 3 véhicules. Voie droite bloquée. Secours sur place.', delay:'+35 min', time:'Il y a 12 min', src:'Gendarmerie Nationale', dateStr:'10 mai 2025' },
+  { icon:'🏗️', cls:'warning', badge:'TRAVAUX', type:'travaux', title:'Travaux — Av. Cheikh Anta Diop', loc:'UCAD, Fann', desc:'Réfection assainissement. Une voie. Durée : 3 semaines.', delay:'+8 min', time:'Depuis 3 jours', src:'ONAS', dateStr:'8 mai → 30 mai 2025' },
+  { icon:'🌊', cls:'urgent', badge:'URGENTE', type:'inondation', title:'Inondation — Yeumbeul Nord', loc:'Route de Rufisque', desc:'Hauteur d\'eau : 60 cm. Route fermée. Pompiers mobilisés.', delay:'Route fermée', time:'Depuis 04h30', src:'Préfecture de Dakar', dateStr:'10 mai 2025' },
+  { icon:'🚓', cls:'', badge:'INFO', type:'accident', title:'Contrôle police — VDN', loc:'Échangeur Keur Massar', desc:'Contrôle routier en cours. Réduire la vitesse.', delay:'+5 min', time:'Il y a 30 min', src:'Police Nationale', dateStr:'10 mai 2025' },
+  { icon:'🚫', cls:'warning', badge:'FERMETURE', type:'fermeture', title:'Fermeture — Pont de Hann', loc:'Boulevard du Centenaire', desc:'Pont fermé pour réparation urgente. Déviation mise en place.', delay:'+20 min', time:'Depuis hier 18h', src:'AGEROUTE', dateStr:'9 mai → 15 mai 2025' },
+  { icon:'🚨', cls:'urgent', badge:'URGENTE', type:'accident', title:'Accident — Corniche Ouest', loc:'Face à Hôtel Terrou-Bi', desc:'Véhicule en panne bloquant la voie rapide. Bouchon sur 2 km.', delay:'+20 min', time:'Il y a 28 min', src:'Signalement citoyen', dateStr:'10 mai 2025' },
+  { icon:'🏗️', cls:'warning', badge:'TRAVAUX', type:'travaux', title:'Travaux — VDN Keur Massar', loc:'VDN, sortie Keur Massar', desc:'Réhabilitation de la chaussée. 2 voies réduites à 1.', delay:'+12 min', time:'Depuis 2 semaines', src:'AGEROUTE', dateStr:'1 mai → 30 mai 2025' },
+  { icon:'🌊', cls:'warning', badge:'ATTENTION', type:'inondation', title:'Eau stagnante — Pikine Est', loc:'Route Nationale, Pikine', desc:'Chaussée glissante. Circulation possible avec précaution.', delay:'+5 min', time:'Ce matin', src:'CSE Sénégal', dateStr:'10 mai 2025' },
+];
+function renderAlertsList() {
+  const el = document.getElementById('alertsList');
+  if (!el) return;
+  el.innerHTML = ALL_ALERTS.map(a => `
+    <div class="perturb-card ${a.cls}" style="margin-bottom:8px;" data-type="${a.type}">
+      <div class="pc-top"><div class="pc-icon ${a.cls==='urgent'?'red':a.cls==='warning'?'amber':'blue'}">${a.icon}</div><div><div class="pc-title">${a.title}</div><div style="font-size:9px;color:#555;margin-top:1px;">📅 ${a.dateStr}</div></div><div class="pc-badge ${a.cls==='urgent'?'urgente':''}">${a.badge}</div></div>
+      <div class="pc-location">📍 ${a.loc}</div>
+      <div class="pc-desc">${a.desc}</div>
+      <div class="pc-impact">⏱️ <span class="pc-impact-txt">${a.delay} · ${a.src}</span></div>
+      <div class="pc-meta" style="margin-top:6px;"><span class="pc-time">${a.time}</span></div>
+    </div>`).join('');
+}
+
+// ══ INIT PERTURB MAP (with optional center/zoom) ══
+function initPerturbMap(center, zoom) {
+  if (maps.perturb) {
+    if (center) maps.perturb.setView(center, zoom||13, {animate:true});
+    maps.perturb.invalidateSize();
+    return;
+  }
+  maps.perturb = mkMap('perturbMap', center||DAKAR, zoom||13);
+  INCIDENTS.forEach(inc => {
+    const icon = L.divIcon({
+      html:`<div style="background:${inc.color};color:white;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:13px;border:2px solid rgba(255,255,255,0.25);">${inc.emoji}</div>`,
+      iconSize:[26,26], iconAnchor:[13,13], className:''
+    });
+    L.marker(inc.latlng, {icon}).addTo(maps.perturb).bindPopup(inc.label);
+  });
+}
+
+// ══ VOICE NAVIGATION ENGINE ══
+let navSteps = [];
+let navStepIdx = 0;
+let navSimInterval = null;
+let navPolyIdx = 0;
+let voiceEnabled = true;
+let navMarker = null;
+let navPolyline = null;
+
+// Direction SVG arrows
+const DIR_ICONS = {
+  straight: `<path d="M12 4L12 20M12 4L6 10M12 4L18 10" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>`,
+  left:     `<path d="M18 12H6M6 12L12 6M6 12L12 18" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>`,
+  right:    `<path d="M6 12H18M18 12L12 6M18 12L12 18" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>`,
+  uturn:    `<path d="M6 18V10a6 6 0 0 1 12 0v2M18 12l-3-3M18 12l-3 3" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>`,
+  arrive:   `<path d="M12 4L12 16M12 16L7 11M12 16L17 11M6 20h12" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>`,
+};
+
+function dirType(modifier='') {
+  const m = modifier.toLowerCase();
+  if (m.includes('left'))  return 'left';
+  if (m.includes('right')) return 'right';
+  if (m.includes('uturn') || m.includes('u-turn')) return 'uturn';
+  return 'straight';
+}
+
+function formatDist(meters) {
+  if (meters >= 1000) return (meters/1000).toFixed(1) + ' km';
+  return Math.round(meters/10)*10 + ' m';
+}
+
+function speak(text) {
+  if (!voiceEnabled) return;
+  if (!('speechSynthesis' in window)) return;
+  window.speechSynthesis.cancel();
+  const utt = new SpeechSynthesisUtterance(text);
+  utt.lang = 'fr-FR';
+  utt.rate = 1.0;
+  utt.pitch = 1.0;
+  utt.volume = 1.0;
+  // Try French voice
+  const voices = window.speechSynthesis.getVoices();
+  const frVoice = voices.find(v => v.lang.startsWith('fr'));
+  if (frVoice) utt.voice = frVoice;
+  window.speechSynthesis.speak(utt);
+}
+
+function toggleVoice() {
+  voiceEnabled = !voiceEnabled;
+  const btn = document.getElementById('navVoiceBtn');
+  const icon = document.getElementById('navVoiceIcon');
+  if (voiceEnabled) {
+    btn.style.borderColor = 'var(--grn)';
+    icon.style.opacity = '1';
+    showToast('Guidage vocal activé 🔊', '🎙️');
+    if (navSteps[navStepIdx]) speak(navSteps[navStepIdx].voiceText);
+  } else {
+    btn.style.borderColor = 'var(--r)';
+    icon.style.opacity = '0.4';
+    window.speechSynthesis.cancel();
+    showToast('Guidage vocal désactivé 🔇', '🔇');
+  }
+}
+
+function showStep(idx) {
+  if (!navSteps.length) return;
+  idx = Math.min(idx, navSteps.length - 1);
+  navStepIdx = idx;
+  const step = navSteps[idx];
+  const next  = navSteps[idx + 1];
+
+  document.getElementById('navDirMain').textContent = step.instruction;
+  document.getElementById('navDirSub').textContent  = step.name || '';
+  document.getElementById('navNextDist').textContent = step.distStr;
+  document.getElementById('navArrowSvg').innerHTML = DIR_ICONS[step.dir] || DIR_ICONS.straight;
+
+  if (next) {
+    document.getElementById('navNextInstr').textContent = next.instruction + (next.name ? ' — ' + next.name : '');
+  } else {
+    document.getElementById('navNextInstr').textContent = 'Arrivée à destination';
+  }
+
+  // Progress bar
+  const bar = document.getElementById('navStepsBar');
+  bar.innerHTML = navSteps.map((_, i) =>
+    `<div style="flex:1;height:3px;border-radius:2px;background:${i<=idx?'var(--r)':'var(--blk4)'};transition:background 0.3s;"></div>`
+  ).join('');
+
+  // Speak
+  speak(step.voiceText);
+}
+
+function buildSteps(osrmSteps) {
+  return osrmSteps.map((s, i) => {
+    const maneuver = s.maneuver || {};
+    const type = maneuver.type || 'turn';
+    const mod  = maneuver.modifier || '';
+    const name = s.name || '';
+    const dist = s.distance || 0;
+    const distStr = formatDist(dist);
+
+    let instruction = '';
+    let voiceText   = '';
+
+    if (type === 'depart') {
+      instruction = 'Démarrer';
+      voiceText   = `Démarrer ${name ? 'sur ' + name : ''}`;
+    } else if (type === 'arrive') {
+      instruction = '🏁 Arrivée';
+      voiceText   = 'Vous êtes arrivé à destination';
+    } else if (type === 'turn' || type === 'new name') {
+      if (mod.includes('left'))       { instruction = 'Tourner à gauche'; voiceText = `Tournez à gauche${name?' sur '+name:''}`; }
+      else if (mod.includes('right')) { instruction = 'Tourner à droite'; voiceText = `Tournez à droite${name?' sur '+name:''}`; }
+      else if (mod.includes('uturn') || mod.includes('u-turn')) { instruction = 'Demi-tour'; voiceText = 'Faites demi-tour'; }
+      else { instruction = 'Continuer tout droit'; voiceText = `Continuez tout droit${name?' sur '+name:''}`; }
+    } else if (type === 'roundabout' || type === 'rotary') {
+      const exit = maneuver.exit || 1;
+      instruction = `Rond-point — sortie ${exit}`;
+      voiceText   = `Au rond-point, prenez la ${exit}ème sortie${name?' sur '+name:''}`;
+    } else if (type === 'merge' || type === 'on ramp' || type === 'off ramp') {
+      instruction = `Rejoindre ${name||'la voie'}`;
+      voiceText   = `Rejoignez ${name||'la voie'}`;
+    } else if (type === 'fork') {
+      if (mod.includes('left'))       { instruction = 'Rester à gauche'; voiceText = 'Restez à gauche'; }
+      else if (mod.includes('right')) { instruction = 'Rester à droite'; voiceText = 'Restez à droite'; }
+      else { instruction = 'Prendre la fourche'; voiceText = 'Prenez la fourche'; }
+    } else {
+      instruction = name ? 'Continuer sur ' + name : 'Continuer';
+      voiceText   = instruction;
+    }
+
+    if (dist > 0 && type !== 'arrive') voiceText += ` dans ${distStr}`;
+
+    return { instruction, voiceText, name, distStr, dist, dir: type==='arrive'?'arrive':dirType(mod) };
+  });
+}
+
+function stopNav() {
+  clearInterval(navSimInterval);
+  window.speechSynthesis && window.speechSynthesis.cancel();
+  goTo('s-plan');
+}
+
+// ══ STATE ══
+let vState={name:'Voiture',emoji:'🚗'}, stopCount=0, driverOnline=true;
+
+function updateClock(){const n=new Date();document.getElementById('clockTime').textContent=n.getHours().toString().padStart(2,'0')+':'+n.getMinutes().toString().padStart(2,'0');}
+updateClock(); setInterval(updateClock,15000);
+
+setTimeout(()=>{
+  document.getElementById('s-splash').classList.remove('active');
+  document.getElementById('s-onboard').classList.add('active');
+  locateMe(true);
+  setTimeout(() => initPlanMap(), 300);
+},2400);
+
+function selectV(el,name,emoji){document.querySelectorAll('.onb-vcard').forEach(c=>c.classList.remove('sel'));el.classList.add('sel');vState={name,emoji};}
+function syncVehicle(){['hVE','rVE','dVE'].forEach(id=>{const e=document.getElementById(id);if(e)e.textContent=vState.emoji;});const hn=document.getElementById('hVN');if(hn)hn.textContent=vState.name;const dv=document.getElementById('dVehicle');if(dv)dv.textContent=vState.name;}
+
+// ── GEOCODE ON SEARCH ──
+async function geocodeInput(val) {
+  if (!val) return null;
+  try {
+    const r = await geocode(val);
+    if (r && r.length) return [parseFloat(r[0].lat), parseFloat(r[0].lon)];
+  } catch(e) {}
+  return null;
+}
+
+async function searchRoute() {
+  const depVal  = document.getElementById('depInp').value.trim();
+  const destVal = document.getElementById('destInp').value.trim();
+  if (!depVal || !destVal) { showToast('Renseignez départ et destination','⚠️'); return; }
+  showToast('Géocodage en cours…','🔍');
+
+  if (!fromCoords) fromCoords = await geocodeInput(depVal);
+  if (!toCoords)   toCoords   = await geocodeInput(destVal);
+
+  if (!fromCoords || !toCoords) { showToast('Adresse introuvable — précisez la ville','❌'); return; }
+
+  // Reset maps so they reinitialize with new coords
+  if (maps.result) { maps.result.remove(); maps.result = null; document.getElementById('resultMapLoading').style.display=''; document.getElementById('resultMapLoading').classList.remove('hidden'); }
+  if (maps.nav)    { maps.nav.remove();    maps.nav    = null; navSteps=[]; navStepIdx=0; navPolyIdx=0; }
+  routeCoords = null;
+
+  goTo('s-result');
+}
+
+function initPlanMap() {
+  if (maps.plan) { setTimeout(() => maps.plan.invalidateSize(), 100); return; }
+  maps.plan = L.map('planMap', { zoomControl:false, attributionControl:false, dragging:true, scrollWheelZoom:false, doubleClickZoom:false, touchZoom:true }).setView(DAKAR, 13);
+  darkTile().addTo(maps.plan);
+  satLabelsTile().addTo(maps.plan);
+  // Ajouter incidents
+  INCIDENTS.forEach(inc => {
+    const icon = L.divIcon({ html:`<div style="background:${inc.color};color:white;border-radius:50%;width:22px;height:22px;display:flex;align-items:center;justify-content:center;font-size:11px;border:2px solid white;">${inc.emoji}</div>`, iconSize:[22,22], iconAnchor:[11,11], className:'' });
+    L.marker(inc.latlng, {icon}).addTo(maps.plan);
+  });
+}
+
+function goTo(id) {
+  if (id !== 's-nav') {
+    clearInterval(navSimInterval);
+    window.speechSynthesis && window.speechSynthesis.cancel();
+    if (id !== 's-result') { maps.nav = null; navSteps = []; navStepIdx = 0; navPolyIdx = 0; }
+  }
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  syncVehicle();
+  setTimeout(()=>{
+    if(id==='s-plan') initPlanMap();
+    if(id==='s-result') initResultMap();
+    if(id==='s-nav') initNavMap();
+    if(id==='s-perturbations') { switchMinTab('stats'); renderAlertsList(); }
+  },100);
+}
+
+function toggleSheet(){sheetOpen=!sheetOpen;document.getElementById('sheet').classList.toggle('open',sheetOpen);}
+function selectRoute(el){document.querySelectorAll('.route-alt').forEach(r=>r.classList.remove('sel'));el.classList.add('sel');showToast('Itinéraire sélectionné','✅');}
+
+function toggleResSheet() {
+  const s = document.getElementById('resSheet');
+  s.classList.toggle('expanded');
+  if (maps.result) setTimeout(() => maps.result.invalidateSize(), 350);
+}
+
+let allRouteCoords = [];
+let routeLayers = [];
+const ROUTE_COLORS = ['#D0021B','#22c55e','#F59E0B'];
+
+function selectRoutePill(idx) {
+  ['rpill1','rpill2'].forEach((id,i) => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.classList.toggle('sel', i===idx);
+    // Rouge pour route 0, vert pour route 1
+    if (i===idx) {
+      el.style.borderColor = idx===0 ? '#D0021B' : '#22c55e';
+      el.style.background  = idx===0 ? 'rgba(208,2,27,0.08)' : 'rgba(34,197,94,0.06)';
+    } else {
+      el.style.borderColor = '';
+      el.style.background  = '';
+    }
+  });
+  routeLayers.forEach((layers, i) => {
+    layers.forEach(l => l.setStyle({ opacity: i===idx ? (layers.indexOf(l)===1?0.95:0.15) : (layers.indexOf(l)===1?0.35:0.06), weight: i===idx ? (layers.indexOf(l)===1?5:12) : (layers.indexOf(l)===1?3:7) }));
+  });
+  if (allRouteCoords[idx] && maps.result) {
+    maps.result.fitBounds(L.latLngBounds(allRouteCoords[idx]), {padding:[50,50], paddingBottomRight:[50,160], animate:true});
+  }
+  routeCoords = allRouteCoords[idx] || routeCoords;
+}
+function addStop(){stopCount++;const box=document.getElementById('stopsBox');const row=document.createElement('div');row.className='inp-row';row.innerHTML=`<div class="dot dot-g"></div><input type="text" placeholder="Arrêt ${stopCount} — ex: Liberté 6, Dakar" style="border:none;background:transparent;font-size:13px;color:#fff;flex:1;outline:none;font-family:'DM Sans',sans-serif;"/><span onclick="this.parentNode.remove();" style="cursor:pointer;color:#555;font-size:20px;line-height:1;padding:0 4px;">×</span>`;box.appendChild(row);row.querySelector('input').focus();}
+function setDest(dest){document.getElementById('destInp').value=dest;toCoords=null;showToast('Destination : '+dest.split(',')[0],'📍');}
+function clearDest(){document.getElementById('destInp').value='';toCoords=null;}
+function selectMode(el, mode) {
+  document.querySelectorAll('.opt-tab').forEach(t => {
+    t.classList.remove('sel');
+    t.style.borderColor = '';
+    t.style.background = '';
+    const lbl = t.querySelector('.opt-tab-label');
+    if (lbl) { lbl.style.color = ''; }
+  });
+  el.classList.add('sel');
+  if (mode === 'peage') {
+    el.style.borderColor = '#22c55e';
+    el.style.background = 'rgba(34,197,94,0.06)';
+    const lbl = el.querySelector('.opt-tab-label');
+    if (lbl) lbl.style.color = '#22c55e';
+    showToast('⚡ Mode : Autoroute avec péage (le plus rapide)', '✅');
+  } else {
+    showToast('🛣️ Mode : Sans péage — routes nationales', '✅');
+  }
+}
+function locateMe(){if(navigator.geolocation){navigator.geolocation.getCurrentPosition(p=>{fromCoords=[p.coords.latitude,p.coords.longitude];document.getElementById('depInp').value='Ma position GPS';showToast('Position GPS détectée','📍');},()=>showToast('GPS non disponible','⚠️'));}else{showToast('GPS non supporté','⚠️');}}
+
+function toggleStatus(){
+  driverOnline=!driverOnline;
+  const pill=document.getElementById('statusPill');
+  const text=document.getElementById('statusText');
+  const sub=document.getElementById('statusSub');
+  if(text) { text.textContent=driverOnline?'En ligne':'Hors ligne'; text.style.color=driverOnline?'#22c55e':'#888'; }
+  if(sub) sub.textContent=driverOnline?'· Disponible pour des courses':'· Indisponible';
+  if(pill) pill.style.background=driverOnline?'rgba(34,197,94,0.08)':'rgba(80,80,80,0.08)';
+  showToast(driverOnline?'Vous êtes en ligne ✅':'Vous êtes hors ligne ⏸️',driverOnline?'✅':'⏸️');
+}
+function filterPerturb(el, fromMin) {
+  const parent = el.closest('.perturb-filters') || el.parentNode;
+  parent.querySelectorAll('.pfil').forEach(f => f.classList.remove('on'));
+  el.classList.add('on');
+  const txt = el.textContent.toLowerCase();
+  let type = 'all';
+  if (txt.includes('accident')) type = 'accident';
+  else if (txt.includes('travaux')) type = 'travaux';
+  else if (txt.includes('inondation')) type = 'inondation';
+  else if (txt.includes('fermeture')) type = 'fermeture';
+  const listId = fromMin ? 'alertsList' : 'perturb-list';
+  const cards = document.querySelectorAll('#' + listId + ' .perturb-card');
+  let n = 0;
+  cards.forEach(c => {
+    const t = (c.dataset.type || '').toLowerCase();
+    const show = type === 'all' || t === type;
+    c.style.display = show ? '' : 'none';
+    if (show) n++;
+  });
+  showToast(type === 'all' ? `Tout — ${n} signalements` : `${el.textContent.trim()} — ${n} résultat${n>1?'s':''}`, '🔍');
+}
+
+let toastTimer;
+function showToast(text,icon='✅'){clearTimeout(toastTimer);document.getElementById('toastText').textContent=text;document.getElementById('toastIcon').textContent=icon;const t=document.getElementById('toast');t.classList.add('show');toastTimer=setTimeout(()=>t.classList.remove('show'),2800);}
+function openNotifs(){document.getElementById('notifsModal').classList.add('open');}
+function closeNotifs(e){if(!e||e.target===document.getElementById('notifsModal'))document.getElementById('notifsModal').classList.remove('open');}
+</script>
+
+  <!-- ══ MODAL SIGNALEMENT GLOBAL ══ -->
+<div id="signalModal" onclick="closeSignalModal(event)">
+  <div class="signal-sheet">
+    <div class="signal-title">⚠️ Signaler un incident</div>
+    <div class="signal-sub" style="color:#F59E0B;font-weight:600;">📋 Soumis au service client — vérification avant attribution des points</div>
+    <div style="background:rgba(245,158,11,0.06);border:1px solid rgba(245,158,11,0.2);border-radius:9px;padding:7px 10px;margin-bottom:12px;display:flex;align-items:center;gap:7px;">
+      <span style="font-size:13px;">🕐</span>
+      <span style="font-size:10px;color:#d4a800;" id="signalTimestamp">—</span>
+      <span style="font-size:10px;color:#555;margin-left:auto;">Signalement instantané</span>
+    </div>
+    <div class="signal-grid" style="grid-template-columns:1fr 1fr 1fr;">
+      <div class="signal-opt" onclick="doSignal('🚧','Route barrée',20)">
+        <div class="so-icon">🚧</div>
+        <div class="so-label">Route barrée</div>
+        <div class="so-pts">+20 pts</div>
+      </div>
+      <div class="signal-opt" onclick="doSignal('🚨','Accident',30)">
+        <div class="so-icon">🚨</div>
+        <div class="so-label">Accident</div>
+        <div class="so-pts">+30 pts</div>
+      </div>
+      <div class="signal-opt" onclick="doSignal('🌊','Inondation',25)">
+        <div class="so-icon">🌊</div>
+        <div class="so-label">Inondation</div>
+        <div class="so-pts">+25 pts</div>
+      </div>
+      <div class="signal-opt" onclick="doSignal('🏗️','Travaux',20)">
+        <div class="so-icon">🏗️</div>
+        <div class="so-label">Travaux</div>
+        <div class="so-pts">+20 pts</div>
+      </div>
+      <div class="signal-opt" onclick="doSignal('⛽','Panne/Obstacle',10)">
+        <div class="so-icon">⛽</div>
+        <div class="so-label">Panne</div>
+        <div class="so-pts">+10 pts</div>
+      </div>
+      <div class="signal-opt" onclick="doSignal('🦺','Obstacle route',15)">
+        <div class="so-icon">🦺</div>
+        <div class="so-label">Obstacle</div>
+        <div class="so-pts">+15 pts</div>
+      </div>
+    </div>
+    <button onclick="closeSignalModal()" style="width:100%;padding:11px;background:var(--blk3);border:none;border-radius:10px;color:var(--gray);font-size:13px;cursor:pointer;font-family:inherit;">Annuler</button>
+  </div>
+</body>
+</html>
