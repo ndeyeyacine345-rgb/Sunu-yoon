@@ -569,6 +569,27 @@ button, [onclick] { -webkit-tap-highlight-color: transparent; touch-action: mani
 .leaflet-control-zoom,.leaflet-control-attribution { display:none!important; }
 .leaflet-popup-content-wrapper { background:#ffffff!important; color:#222!important; border:1px solid #ddd!important; border-radius:10px!important; box-shadow:0 4px 14px rgba(0,0,0,0.15)!important; font-family:'DM Sans',sans-serif!important; font-size:12px!important; }
 .leaflet-popup-tip { background:#ffffff!important; }
+  /* FIX LOGO MOBILE */
+@media (max-width: 480px) {
+  .app-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 6px;
+  }
+
+  .h-logo {
+    font-size: 14px !important;
+    max-width: 40%;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .header-actions {
+    flex-shrink: 0;
+  }
+}
 </style>
 </head>
 <body>
