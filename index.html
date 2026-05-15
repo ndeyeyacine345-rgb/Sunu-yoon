@@ -18,6 +18,32 @@
   --amb:#F59E0B; --amb-bg:#1a1400; --amb-border:#2e2500; --amb-txt:#d4a800;
   --grn:#22c55e; --grn-bg:#0d1a12; --grn-border:#1a3020;
 }
+/* ══ LIGHT THEME ══ */
+body.light-mode {
+  --blk:#f5f5f5; --blk2:#ffffff; --blk3:#e5e5e5; --blk4:#d0d0d0; --blk5:#b0b0b0;
+  --wht:#111111; --gray:#666; --gray2:#555; --gray3:#333;
+  --r-bg:#fef2f2; --r-border:#fecaca;
+  --amb-bg:#fffbeb; --amb-border:#fde68a; --amb-txt:#92400e;
+  --grn-bg:#f0fdf4; --grn-border:#bbf7d0;
+}
+body.light-mode #device { background:#f5f5f5; }
+body.light-mode .status-bar,
+body.light-mode .app-header,
+body.light-mode .home-bar { background:#f5f5f5; border-color:#e0e0e0; }
+body.light-mode #s-splash,
+body.light-mode #s-onboard { background:#f5f5f5; }
+body.light-mode .route-card,
+body.light-mode .opt-tab,
+body.light-mode .preset-card,
+body.light-mode .drv-profile,
+body.light-mode .pref-row { background:#fff; border-color:#ddd; }
+body.light-mode input, body.light-mode textarea, body.light-mode select { color:#111 !important; background:#fff !important; border-color:#ddd !important; }
+body.light-mode #toast { background:#fff; color:#111; border-color:#ddd; }
+body.light-mode .traffic-banner { background:rgba(245,158,11,0.06); }
+body.light-mode #s-driver { background:#f5f5f5; }
+body.light-mode .drv-body::-webkit-scrollbar-thumb,
+body.light-mode .plan-panel::-webkit-scrollbar-thumb { background:#ccc; }
+
 html, body {
   height: 100%; background: #070707;
   display: flex; align-items: center; justify-content: center;
@@ -650,21 +676,24 @@ html, body {
         <button onclick="goTo('s-onboard')" style="background:var(--blk2);border:1px solid var(--blk3);border-radius:9px;padding:5px 10px;font-size:11px;color:#ccc;cursor:pointer;font-family:'DM Sans',sans-serif;display:flex;align-items:center;gap:4px;flex-shrink:0;">
           <svg width="11" height="11" viewBox="0 0 12 12" fill="none"><path d="M8 2L4 6L8 10" stroke="#CCC" stroke-width="1.5" stroke-linecap="round"/></svg>Retour
         </button>
-        <div class="h-logo" style="position:absolute;left:50%;transform:translateX(-50%);">SUNU<em>YOON</em></div>
-        <div class="header-actions">
+        <!-- Logo: flex centré (pas absolute) pour éviter chevauchement sur mobile -->
+        <div class="h-logo" style="flex:1;text-align:center;font-size:18px;letter-spacing:2px;">SUNU<em>YOON</em></div>
+        <div class="header-actions" style="flex-shrink:0;gap:5px;">
           <!-- Chauffeur -->
-          <div style="display:flex;align-items:center;gap:5px;background:var(--blk2);border:1px solid var(--blk3);border-radius:10px;padding:5px 9px;cursor:pointer;" onclick="goTo('s-driver')">
+          <div style="display:flex;align-items:center;gap:4px;background:var(--blk2);border:1px solid var(--blk3);border-radius:10px;padding:5px 8px;cursor:pointer;" onclick="goTo('s-driver')">
             <svg width="13" height="13" viewBox="0 0 14 14" fill="none"><circle cx="7" cy="5" r="3" stroke="#BBB" stroke-width="1.3"/><path d="M2 13c0-2.76 2.24-5 5-5s5 2.24 5 5" stroke="#BBB" stroke-width="1.3" stroke-linecap="round"/></svg>
             <span style="font-size:10px;font-weight:700;color:#bbb;">Chauffeur</span>
           </div>
-          <!-- Ministère -->
-          <div style="display:flex;align-items:center;gap:5px;background:rgba(59,130,246,0.1);border:1px solid rgba(59,130,246,0.25);border-radius:10px;padding:5px 9px;cursor:pointer;" onclick="goTo('s-perturbations');setTimeout(()=>switchMinTab('stats'),150)">
-            <span style="font-size:12px;">🇸🇳</span>
-            <span style="font-size:9px;font-weight:800;color:#93c5fd;letter-spacing:.3px;">MINISTÈRE</span>
-            <div style="width:6px;height:6px;border-radius:50%;background:#22c55e;animation:blink 1.5s infinite;"></div>
+          <!-- Ministère — label raccourci pour gagner de la place -->
+          <div style="display:flex;align-items:center;gap:4px;background:rgba(59,130,246,0.1);border:1px solid rgba(59,130,246,0.25);border-radius:10px;padding:5px 7px;cursor:pointer;" onclick="goTo('s-perturbations');setTimeout(()=>switchMinTab('stats'),150)">
+            <span style="font-size:11px;">🇸🇳</span>
+            <span style="font-size:9px;font-weight:800;color:#93c5fd;letter-spacing:.3px;">MIN.</span>
+            <div style="width:6px;height:6px;border-radius:50%;background:#22c55e;animation:blink 1.5s infinite;flex-shrink:0;"></div>
           </div>
           <!-- Véhicule -->
           <div class="v-pill" onclick="goTo('s-onboard')"><span id="hVE" style="font-size:14px;">🚗</span><svg width="9" height="6" viewBox="0 0 10 6" fill="none"><path d="M1 1L5 5L9 1" stroke="#777" stroke-width="1.5" stroke-linecap="round"/></svg></div>
+          <!-- Thème -->
+          <div onclick="toggleTheme()" id="themeBtn" title="Thème clair/sombre" style="width:30px;height:30px;background:var(--blk2);border:1px solid var(--blk3);border-radius:9px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:15px;flex-shrink:0;">🌙</div>
         </div>
       </div>
 
@@ -851,6 +880,10 @@ html, body {
         <svg id="navVoiceIcon" width="18" height="18" viewBox="0 0 20 20" fill="none"><path d="M10 2a3 3 0 0 1 3 3v5a3 3 0 0 1-6 0V5a3 3 0 0 1 3-3z" stroke="white" stroke-width="1.5"/><path d="M5 10a5 5 0 0 0 10 0M10 15v3M8 18h4" stroke="white" stroke-width="1.5" stroke-linecap="round"/></svg>
       </div>
 
+      <!-- BOUTON RETOUR top-left nav -->
+      <div onclick="stopNav()" style="position:absolute;top:14px;left:14px;z-index:25;background:rgba(10,10,10,0.88);border:1px solid #333;border-radius:10px;padding:7px 11px;font-size:12px;color:#ccc;cursor:pointer;font-family:'DM Sans',sans-serif;display:flex;align-items:center;gap:5px;backdrop-filter:blur(10px);">
+        <svg width="11" height="11" viewBox="0 0 12 12" fill="none"><path d="M8 2L4 6L8 10" stroke="#CCC" stroke-width="1.5" stroke-linecap="round"/></svg>Retour
+      </div>
       <div class="nav-top-card" id="navTopCard">
         <div style="display:flex;align-items:center;gap:12px;margin-bottom:6px;">
           <!-- Icône direction -->
@@ -1179,16 +1212,51 @@ html, body {
 
     <!-- ── TAB : ZONES ── -->
     <div class="min-panel" id="mpanel-zones" style="display:flex;flex-direction:column;">
-      <!-- Zone selector -->
+      <!-- Zone selector — menu déroulant -->
       <div style="padding:10px 14px;background:#0a0f1a;border-bottom:1px solid rgba(59,130,246,0.1);flex-shrink:0;">
-        <div class="form-lbl" style="margin-bottom:6px;">Sélectionner une zone de Dakar</div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;" id="zoneGrid">
-          <div class="zone-btn active" id="zone-all" onclick="selectZone('all',[14.6937,-17.4441],12)">🗺️ Tout Dakar</div>
-          <div class="zone-btn" id="zone-plateau" onclick="selectZone('plateau',[14.6693,-17.4411],14)">🏙️ Plateau</div>
-          <div class="zone-btn" id="zone-medina" onclick="selectZone('medina',[14.6806,-17.4519],14)">🏘️ Médina</div>
-          <div class="zone-btn" id="zone-yoff" onclick="selectZone('yoff',[14.7571,-17.4629],14)">✈️ Yoff / AIBD</div>
-          <div class="zone-btn" id="zone-pikine" onclick="selectZone('pikine',[14.7474,-17.3934],13)">🏗️ Pikine</div>
-          <div class="zone-btn" id="zone-vdn" onclick="selectZone('vdn',[14.7200,-17.4400],13)">🛣️ VDN</div>
+        <div class="form-lbl" style="margin-bottom:6px;">📍 Sélectionner une commune de Dakar</div>
+        <div style="position:relative;">
+          <select id="zoneSelect" onchange="onZoneSelect(this)" style="width:100%;background:#0f1929;border:1px solid rgba(59,130,246,0.3);border-radius:10px;padding:10px 36px 10px 12px;font-size:13px;font-weight:600;color:#93c5fd;font-family:'DM Sans',sans-serif;appearance:none;-webkit-appearance:none;cursor:pointer;outline:none;">
+            <optgroup label="── Vue globale ──">
+              <option value="all|14.6937|-17.4441|12">🗺️ Tout Dakar — 14 incidents</option>
+            </optgroup>
+            <optgroup label="── Communes de Dakar ──">
+              <option value="plateau|14.6951|-17.4439|14">🏙️ Plateau — 3 incidents</option>
+              <option value="medina|14.6917|-17.4567|14">🏘️ Médina — 4 incidents</option>
+              <option value="bel-air|14.6840|-17.4250|15">🌊 Bel Air / Hann</option>
+              <option value="fann|14.6979|-17.4629|15">🏥 Fann — Point E — Amitié</option>
+              <option value="gueule-tapee|14.6920|-17.4500|15">🏠 Gueule Tapée — Fass — Colobane</option>
+              <option value="grand-dakar|14.7020|-17.4455|14">🏘️ Grand Dakar</option>
+              <option value="hlm|14.7000|-17.4600|15">🏗️ HLM</option>
+              <option value="liberte|14.7053|-17.4580|15">🏢 Liberté — Sicap</option>
+              <option value="dieuppeul|14.7080|-17.4620|15">🏠 Dieuppeul — Derklé</option>
+            </optgroup>
+            <optgroup label="── Communes (périphérie) ──">
+              <option value="ouakam|14.7313|-17.5012|14">⛪ Ouakam</option>
+              <option value="ngor|14.7488|-17.5107|15">🏖️ Ngor — Almadies</option>
+              <option value="yoff|14.7445|-17.4900|14">✈️ Yoff / AIBD — 5 incidents</option>
+              <option value="parcelles|14.7589|-17.4315|14">🏘️ Parcelles Assainies</option>
+              <option value="camberene|14.7560|-17.4560|15">🌿 Cambérène</option>
+            </optgroup>
+            <optgroup label="── Banlieue ──">
+              <option value="guediawaye|14.7739|-17.4038|13">🏙️ Guédiawaye</option>
+              <option value="pikine|14.7513|-17.3948|13">🏗️ Pikine — 6 incidents</option>
+              <option value="yeumbeul|14.7750|-17.3600|14">🌊 Yeumbeul Nord</option>
+              <option value="thiaroye|14.7274|-17.3688|14">🚌 Thiaroye</option>
+              <option value="mbao|14.7283|-17.3200|14">🏭 Mbao</option>
+              <option value="keur-massar|14.7820|-17.3360|13">🏘️ Keur Massar</option>
+              <option value="rufisque|14.7155|-17.2756|13">⚓ Rufisque</option>
+              <option value="diamniadio|14.7220|-17.1860|13">🏛️ Diamniadio</option>
+            </optgroup>
+            <optgroup label="── Axes principaux ──">
+              <option value="vdn|14.7200|-17.4400|13">🛣️ VDN — 2 incidents</option>
+              <option value="corniche|14.7050|-17.4850|14">🌊 Corniche Ouest</option>
+              <option value="autoroute|14.7100|-17.3800|12">🛣️ Autoroute AIBD</option>
+            </optgroup>
+          </select>
+          <div style="position:absolute;right:12px;top:50%;transform:translateY(-50%);pointer-events:none;">
+            <svg width="12" height="8" viewBox="0 0 12 8" fill="none"><path d="M1 1L6 7L11 1" stroke="#93c5fd" stroke-width="1.8" stroke-linecap="round"/></svg>
+          </div>
         </div>
       </div>
       <!-- Map -->
@@ -1778,11 +1846,21 @@ const ZONE_DATA = {
   pikine:  { label:'Pikine', count:6, desc:'6 incidents : inondations Yeumbeul + travaux VDN.' },
   vdn:     { label:'VDN', count:2, desc:'2 incidents sur la VDN : contrôle police + chantier.' },
 };
+function onZoneSelect(sel) {
+  const parts = sel.value.split('|');
+  const key = parts[0];
+  const center = [parseFloat(parts[1]), parseFloat(parts[2])];
+  const zoom = parseInt(parts[3]);
+  const z = ZONE_DATA[key] || { label: sel.options[sel.selectedIndex].text.replace(/^[^\s]+\s/,''), count: '—', desc: 'Affichage de la zone sélectionnée.' };
+  document.getElementById('zoneLabel').textContent = '📍 ' + z.label + (z.count !== '—' ? ' — ' + z.count + ' incidents' : '');
+  document.getElementById('zoneCount').textContent = z.count;
+  document.getElementById('zoneDesc').textContent = z.desc;
+  if (maps.perturb) maps.perturb.setView(center, zoom, {animate:true});
+  else initPerturbMap(center, zoom);
+}
 function selectZone(key, center, zoom) {
-  document.querySelectorAll('.zone-btn').forEach(b => b.classList.remove('active'));
-  document.getElementById('zone-' + key).classList.add('active');
-  const z = ZONE_DATA[key];
-  document.getElementById('zoneLabel').textContent = '📍 ' + z.label + ' — ' + z.count + ' incidents';
+  const z = ZONE_DATA[key] || { label: key, count: '—', desc: '' };
+  document.getElementById('zoneLabel').textContent = '📍 ' + z.label + (z.count !== '—' ? ' — ' + z.count + ' incidents' : '');
   document.getElementById('zoneCount').textContent = z.count;
   document.getElementById('zoneDesc').textContent = z.desc;
   if (maps.perturb) maps.perturb.setView(center, zoom, {animate:true});
@@ -1906,20 +1984,52 @@ function formatDist(meters) {
   return Math.round(meters/10)*10 + ' m';
 }
 
+// Pre-load voices (needed on mobile/iOS where getVoices() is async)
+let _cachedVoices = [];
+function _loadVoices() {
+  const v = window.speechSynthesis.getVoices();
+  if (v.length) _cachedVoices = v;
+}
+if ('speechSynthesis' in window) {
+  _loadVoices();
+  window.speechSynthesis.onvoiceschanged = _loadVoices;
+}
+
+// iOS requires speechSynthesis to be unlocked via a user gesture.
+// We unlock it silently on first touch anywhere on the page.
+let _speechUnlocked = false;
+function _unlockSpeech() {
+  if (_speechUnlocked || !('speechSynthesis' in window)) return;
+  _speechUnlocked = true;
+  const utt = new SpeechSynthesisUtterance('');
+  utt.volume = 0;
+  window.speechSynthesis.speak(utt);
+  document.removeEventListener('touchstart', _unlockSpeech);
+  document.removeEventListener('click', _unlockSpeech);
+}
+document.addEventListener('touchstart', _unlockSpeech, { once: true });
+document.addEventListener('click', _unlockSpeech, { once: true });
+
 function speak(text) {
   if (!voiceEnabled) return;
   if (!('speechSynthesis' in window)) return;
-  window.speechSynthesis.cancel();
-  const utt = new SpeechSynthesisUtterance(text);
-  utt.lang = 'fr-FR';
-  utt.rate = 1.0;
-  utt.pitch = 1.0;
-  utt.volume = 1.0;
-  // Try French voice
-  const voices = window.speechSynthesis.getVoices();
-  const frVoice = voices.find(v => v.lang.startsWith('fr'));
-  if (frVoice) utt.voice = frVoice;
-  window.speechSynthesis.speak(utt);
+  // Small delay on mobile so synthesis engine is ready
+  setTimeout(() => {
+    window.speechSynthesis.cancel();
+    const utt = new SpeechSynthesisUtterance(text);
+    utt.lang = 'fr-FR';
+    utt.rate = 1.0;
+    utt.pitch = 1.0;
+    utt.volume = 1.0;
+    // Pick best French voice from cached list
+    if (!_cachedVoices.length) _loadVoices();
+    const frVoice = _cachedVoices.find(v => v.lang === 'fr-FR') ||
+                    _cachedVoices.find(v => v.lang.startsWith('fr'));
+    if (frVoice) utt.voice = frVoice;
+    // Workaround: iOS Chrome sometimes stops mid-sentence; keep it alive
+    utt.onend = () => { window.speechSynthesis.cancel(); };
+    window.speechSynthesis.speak(utt);
+  }, 80);
 }
 
 function toggleVoice() {
@@ -2183,6 +2293,27 @@ function filterPerturb(el, fromMin) {
   showToast(type === 'all' ? `Tout — ${n} signalements` : `${el.textContent.trim()} — ${n} résultat${n>1?'s':''}`, '🔍');
 }
 
+// ══ THEME TOGGLE ══
+function toggleTheme() {
+  const body = document.body;
+  const btn  = document.getElementById('themeBtn');
+  body.classList.toggle('light-mode');
+  const isLight = body.classList.contains('light-mode');
+  if (btn) btn.textContent = isLight ? '☀️' : '🌙';
+  showToast(isLight ? 'Mode clair activé ☀️' : 'Mode sombre activé 🌙', isLight ? '☀️' : '🌙');
+  localStorage.setItem('sunuyoon_theme', isLight ? 'light' : 'dark');
+}
+// Restore saved theme
+(function() {
+  try { if (localStorage.getItem('sunuyoon_theme') === 'light') {
+    document.body.classList.add('light-mode');
+    window.addEventListener('DOMContentLoaded', () => {
+      const btn = document.getElementById('themeBtn');
+      if (btn) btn.textContent = '☀️';
+    });
+  }} catch(e) {}
+})();
+
 let toastTimer;
 function showToast(text,icon='✅'){clearTimeout(toastTimer);document.getElementById('toastText').textContent=text;document.getElementById('toastIcon').textContent=icon;const t=document.getElementById('toast');t.classList.add('show');toastTimer=setTimeout(()=>t.classList.remove('show'),2800);}
 function openNotifs(){document.getElementById('notifsModal').classList.add('open');}
@@ -2235,4 +2366,3 @@ function closeNotifs(e){if(!e||e.target===document.getElementById('notifsModal')
   </div>
 </body>
 </html>
-
