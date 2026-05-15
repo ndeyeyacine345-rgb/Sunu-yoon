@@ -98,6 +98,8 @@ html, body {
 .splash-loader { margin-top:60px; width:140px; height:2px; background:var(--blk3); border-radius:2px; overflow:hidden; animation:fadeUp 0.5s 0.5s both; }
 .splash-loader-fill { height:100%; background:var(--r); border-radius:2px; width:0%; animation:loadFill 1.6s 0.6s cubic-bezier(0.4,0,0.2,1) forwards; }
 @keyframes loadFill{to{width:100%;}}
+@keyframes trafficPulse{0%,100%{opacity:1;}50%{opacity:0.6;}}
+@keyframes circleExpand{0%{transform:scale(1);opacity:0.8;}100%{transform:scale(1.3);opacity:0;}}
 @keyframes fadeUp{from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:translateY(0);}}
 
 /* ══ ONBOARDING ══ */
@@ -333,6 +335,31 @@ html, body {
 .pc-time { font-size:10px; color:var(--gray); }
 .pc-source { font-size:9.5px; color:rgba(96,165,250,0.7); font-weight:600; }
 
+/* VOUCHER CARDS */
+.voucher-card {
+  background:linear-gradient(135deg,#0d1f10,#0a1a0d);
+  border:1.5px solid rgba(34,197,94,0.25);
+  border-radius:13px; padding:12px;
+  position:relative; overflow:hidden;
+}
+.voucher-card::before {
+  content:''; position:absolute; top:0; left:0; right:0; height:2px;
+  background:linear-gradient(90deg,transparent,#22c55e,transparent);
+  animation:shimmer 2.5s infinite;
+}
+
+/* REROUTE BANNER */
+#rerouteBanner {
+  position:absolute; top:0; left:0; right:0; z-index:30;
+  background:linear-gradient(135deg,rgba(208,2,27,0.97),rgba(140,0,15,0.97));
+  padding:12px 14px; display:none; align-items:center; gap:10px;
+  border-bottom:2px solid rgba(255,255,255,0.2);
+  animation:slideDown 0.4s cubic-bezier(0.34,1.2,0.64,1) both;
+}
+#rerouteBanner.show { display:flex; }
+@keyframes slideDown { from{transform:translateY(-100%);} to{transform:translateY(0);} }
+.reroute-spinner { width:20px;height:20px;border:2.5px solid rgba(255,255,255,0.3);border-top-color:#fff;border-radius:50%;animation:spin 0.7s linear infinite;flex-shrink:0; }
+
 /* TOAST */
 #toast { position:absolute; bottom:80px; left:50%; transform:translateX(-50%) translateY(20px); background:var(--blk2); color:var(--wht); border:1px solid var(--blk4); padding:9px 16px; border-radius:20px; font-size:12px; font-weight:500; opacity:0; transition:all 0.3s; pointer-events:none; white-space:nowrap; z-index:999; display:flex; align-items:center; gap:7px; box-shadow:0 4px 20px rgba(0,0,0,0.5); }
 #toast.show { opacity:1; transform:translateX(-50%) translateY(0); }
@@ -508,7 +535,7 @@ html, body {
 /* Leaflet overrides */
 .min-tab { flex:1; padding:9px 4px; text-align:center; font-size:9px; font-weight:700; color:rgba(147,197,253,0.4); cursor:pointer; border-bottom:2px solid transparent; transition:.2s; letter-spacing:.3px; text-transform:uppercase; }
 .min-tab.active { color:#93c5fd; border-bottom-color:#3B82F6; }
-.min-panel { display:none; flex:1; overflow-y:auto; }
+.min-panel { display:none; flex:1; overflow:hidden; min-height:0; }
 .min-panel.active { display:flex; flex-direction:column; }
 .min-kpi { background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.08); border-radius:10px; padding:10px 8px; text-align:center; }
 .min-kpi-val { font-size:22px; font-weight:800; line-height:1; }
@@ -551,6 +578,184 @@ html, body {
 .leaflet-control-zoom,.leaflet-control-attribution { display:none!important; }
 .leaflet-popup-content-wrapper { background:#ffffff!important; color:#222!important; border:1px solid #ddd!important; border-radius:10px!important; box-shadow:0 4px 14px rgba(0,0,0,0.15)!important; font-family:'DM Sans',sans-serif!important; font-size:12px!important; }
 .leaflet-popup-tip { background:#ffffff!important; }
+/* ══ GABARITS VÉHICULES — APPROCHE MIXTE CSS + ICÔNES ══ */
+
+/* Route de simulation — bande asphaltée */
+.traffic-road {
+  position: relative;
+  background: #1a1a2e;
+  border: 1px solid rgba(59,130,246,0.2);
+  border-radius: 10px;
+  padding: 10px 8px;
+  overflow: hidden;
+  margin-top: 10px;
+}
+.road-lane {
+  position: relative;
+  height: 28px;
+  background: #151525;
+  border-radius: 4px;
+  margin-bottom: 5px;
+  overflow: hidden;
+  border: 1px solid rgba(255,255,255,0.04);
+}
+.road-lane:last-child { margin-bottom: 0; }
+/* Lignes pointillées au centre des voies */
+.road-lane::after {
+  content: '';
+  position: absolute;
+  top: 50%; left: 0; right: 0; height: 1px;
+  background: repeating-linear-gradient(90deg, rgba(255,255,255,0.08) 0px, rgba(255,255,255,0.08) 8px, transparent 8px, transparent 16px);
+  transform: translateY(-50%);
+}
+.lane-label {
+  position: absolute;
+  left: 6px; top: 50%; transform: translateY(-50%);
+  font-size: 8px; font-weight: 700; color: rgba(255,255,255,0.25);
+  z-index: 2; white-space: nowrap; pointer-events: none;
+}
+
+/* ── GABARITS : formes CSS vue de dessus ── */
+.veh {
+  position: absolute;
+  top: 50%; transform: translateY(-50%);
+  border-radius: 3px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 9px; font-weight: 800; color: rgba(255,255,255,0.9);
+  letter-spacing: 0.2px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.5);
+  will-change: left;
+  z-index: 3;
+}
+/* Moto — très fine */
+.veh-moto {
+  width: 14px; height: 8px;
+  background: #F59E0B;
+  border-radius: 50% 50% 50% 50% / 40% 40% 60% 60%;
+  box-shadow: 0 0 6px rgba(245,158,11,0.5);
+}
+/* Voiture particulière */
+.veh-car {
+  width: 20px; height: 12px;
+  background: #3B82F6;
+  border-radius: 3px 3px 2px 2px;
+  box-shadow: 0 0 6px rgba(59,130,246,0.4);
+}
+.veh-car::before {
+  content: '';
+  position: absolute;
+  top: 1px; left: 2px; right: 2px; bottom: 3px;
+  background: rgba(255,255,255,0.12);
+  border-radius: 2px;
+}
+/* Taxi Dakar — jaune */
+.veh-taxi {
+  width: 20px; height: 12px;
+  background: #EAB308;
+  border-radius: 3px 3px 2px 2px;
+  box-shadow: 0 0 6px rgba(234,179,8,0.5);
+}
+.veh-taxi::after {
+  content: 'T';
+  font-size: 7px; color: #000; font-weight: 900; line-height: 1;
+}
+/* Bus DDD / Tata */
+.veh-bus {
+  width: 26px; height: 13px;
+  background: #16a34a;
+  border-radius: 2px;
+  box-shadow: 0 0 8px rgba(22,163,74,0.5);
+}
+.veh-bus::before {
+  content: '';
+  position: absolute;
+  top: 1.5px; left: 2px; width: 5px; bottom: 1.5px;
+  background: rgba(255,255,255,0.2); border-radius: 1px;
+}
+.veh-bus::after {
+  content: '';
+  position: absolute;
+  top: 1.5px; right: 2px; width: 5px; bottom: 1.5px;
+  background: rgba(255,255,255,0.2); border-radius: 1px;
+}
+/* Camion */
+.veh-truck {
+  width: 32px; height: 14px;
+  background: #D0021B;
+  border-radius: 2px 3px 3px 2px;
+  box-shadow: 0 0 8px rgba(208,2,27,0.5);
+}
+.veh-truck::before {
+  content: '';
+  position: absolute;
+  left: 0; top: 0; bottom: 0; width: 9px;
+  background: rgba(0,0,0,0.3);
+  border-radius: 2px 0 0 2px;
+}
+
+/* Couleurs selon état trafic */
+.veh-slow  { filter: brightness(0.75) saturate(0.6); }
+.veh-stuck { filter: brightness(0.5) saturate(0.4); animation: none !important; }
+
+/* Animations de défilement — vitesses différentes */
+@keyframes vehDrive1 { from { left: 105%; } to { left: -15%; } }
+@keyframes vehDrive2 { from { left: 110%; } to { left: -12%; } }
+@keyframes vehDrive3 { from { left:  95%; } to { left: -18%; } }
+@keyframes vehDrive4 { from { left: 120%; } to { left: -10%; } }
+@keyframes vehDriveSlw { from { left: 105%; } to { left: -15%; } }
+
+/* ── LÉGENDE DES GABARITS ── */
+.veh-legend {
+  display: flex; flex-wrap: wrap; gap: 6px;
+  margin-bottom: 10px; margin-top: 6px;
+}
+.vleg-item {
+  display: flex; align-items: center; gap: 5px;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.07);
+  border-radius: 7px; padding: 4px 8px;
+  font-size: 9.5px; color: #888; font-weight: 500;
+}
+.vleg-shape {
+  flex-shrink: 0; border-radius: 2px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.4);
+}
+
+/* ── COMPTEUR PAR TYPE DE VÉHICULE ── */
+.vcount-grid {
+  display: grid; grid-template-columns: repeat(4, 1fr);
+  gap: 5px; margin-top: 8px;
+}
+.vcount-card {
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.07);
+  border-radius: 8px; padding: 7px 4px; text-align: center;
+}
+.vcount-shape { margin: 0 auto 4px; border-radius: 2px; }
+.vcount-val { font-size: 13px; font-weight: 800; line-height: 1; }
+.vcount-lbl { font-size: 8px; color: #555; margin-top: 2px; font-weight: 600; text-transform: uppercase; letter-spacing: .3px; }
+
+/* ══ CHANTIER CARDS (ADMIN) ══ */
+.chantier-card {
+  background: #0a1220;
+  border: 1px solid rgba(59,130,246,0.18);
+  border-radius: 11px;
+  padding: 10px 11px;
+  transition: border-color .2s;
+}
+.chantier-card:hover { border-color: rgba(59,130,246,0.4); }
+.ch-badge {
+  font-size: 8.5px; font-weight: 700;
+  padding: 2px 7px; border-radius: 20px;
+  white-space: nowrap;
+}
+.ch-info    { background: rgba(34,197,94,0.1);   color: #22c55e;  border: 1px solid rgba(34,197,94,0.2); }
+.ch-warn    { background: rgba(245,158,11,0.1);  color: #F59E0B;  border: 1px solid rgba(245,158,11,0.2); }
+.ch-urg     { background: rgba(208,2,27,0.1);    color: #ff5f6d;  border: 1px solid rgba(208,2,27,0.2); }
+.ch-status-on      { background: rgba(34,197,94,0.08);  color: #22c55e; border: 1px solid rgba(34,197,94,0.15); }
+.ch-status-planned { background: rgba(139,92,246,0.08); color: #a78bfa; border: 1px solid rgba(139,92,246,0.15); }
+.ch-status-done    { background: rgba(100,116,139,0.1); color: #64748b; border: 1px solid rgba(100,116,139,0.15); }
+
 /* FIX LOGO MOBILE */
 @media (max-width: 480px) {
   .app-header {
@@ -602,10 +807,7 @@ html, body {
   <!-- ══ ONBOARDING ══ -->
   <div id="s-onboard" class="screen">
     <div class="onb-hero" style="position:relative;">
-      <!-- Bouton retour splash -->
-      <button onclick="goTo('s-splash')" style="position:absolute;top:14px;left:14px;z-index:20;background:rgba(0,0,0,0.55);border:1px solid rgba(255,255,255,0.12);border-radius:9px;padding:6px 11px;font-size:11px;font-weight:600;color:#ccc;cursor:pointer;font-family:'DM Sans',sans-serif;display:flex;align-items:center;gap:5px;backdrop-filter:blur(8px);">
-        <svg width="11" height="11" viewBox="0 0 12 12" fill="none"><path d="M8 2L4 6L8 10" stroke="#CCC" stroke-width="1.8" stroke-linecap="round"/></svg>Retour
-      </button>
+
       <svg viewBox="0 0 390 230" preserveAspectRatio="xMidYMid slice">
         <rect width="390" height="230" fill="#0d0d0d"/>
         <line x1="0" y1="40" x2="390" y2="40" stroke="#161616" stroke-width="1"/><line x1="0" y1="80" x2="390" y2="80" stroke="#161616" stroke-width="1"/><line x1="0" y1="120" x2="390" y2="120" stroke="#161616" stroke-width="1"/><line x1="0" y1="160" x2="390" y2="160" stroke="#161616" stroke-width="1"/>
@@ -666,10 +868,10 @@ html, body {
   </div>
 
   <!-- ══ PLAN ══ -->
-  <div id="s-plan" class="screen" style="flex-direction:column;">
+  <div id="s-plan" class="screen" style="flex-direction:column;overflow:hidden;">
 
     <!-- ── ZONE HAUTE FIXE : header + champs + boutons ── -->
-    <div style="flex-shrink:0;background:var(--blk);z-index:10;position:relative;">
+    <div style="flex-shrink:0;background:var(--blk);z-index:10;position:relative;box-shadow:0 2px 12px rgba(0,0,0,0.5);">
 
       <!-- Header -->
       <div class="app-header" style="border-bottom:1px solid var(--blk3);">
@@ -731,27 +933,48 @@ html, body {
       </div>
 
       <!-- Options + bouton recherche -->
-      <div style="padding:8px 14px 12px;display:flex;gap:8px;align-items:center;">
-        <div class="option-tabs" style="flex:1;margin-bottom:0;">
-          <div class="opt-tab sel" onclick="selectMode(this,'peage')" style="border-color:#22c55e;background:rgba(34,197,94,0.08);padding:6px 4px;"><div class="opt-tab-icon">⚡</div><div class="opt-tab-label" style="color:#22c55e;">Avec péage</div></div>
-          <div class="opt-tab" onclick="selectMode(this,'sans')" style="padding:6px 4px;"><div class="opt-tab-icon">🛣️</div><div class="opt-tab-label">Sans péage</div></div>
+      <div style="padding:8px 14px 12px;display:flex;gap:8px;align-items:stretch;">
+        <div style="display:flex;gap:6px;flex:1;">
+          <!-- Avec péage — actif par défaut, vert, avec sous-info -->
+          <div id="tab-peage" onclick="selectMode(this,'peage')" style="flex:1;background:rgba(34,197,94,0.10);border:1.5px solid #22c55e;border-radius:11px;padding:7px 6px;cursor:pointer;text-align:center;transition:all 0.2s;">
+            <div style="font-size:15px;margin-bottom:1px;">⚡</div>
+            <div style="font-size:10px;font-weight:800;color:#22c55e;line-height:1.2;">Avec péage</div>
+            <div style="font-size:8.5px;color:#3a6a3a;margin-top:2px;font-weight:600;">Autoroute · +rapide</div>
+          </div>
+          <!-- Sans péage -->
+          <div id="tab-sans" onclick="selectMode(this,'sans')" style="flex:1;background:transparent;border:1.5px solid var(--blk3);border-radius:11px;padding:7px 6px;cursor:pointer;text-align:center;transition:all 0.2s;">
+            <div style="font-size:15px;margin-bottom:1px;">🛣️</div>
+            <div style="font-size:10px;font-weight:700;color:var(--gray3);line-height:1.2;">Sans péage</div>
+            <div style="font-size:8.5px;color:var(--gray);margin-top:2px;font-weight:500;">Routes nat.</div>
+          </div>
         </div>
-        <button onclick="searchRoute()" style="background:var(--r);color:#fff;border:none;border-radius:12px;padding:10px 16px;font-size:13px;font-weight:800;cursor:pointer;font-family:'DM Sans',sans-serif;display:flex;align-items:center;gap:6px;white-space:nowrap;box-shadow:0 4px 16px rgba(208,2,27,0.4);flex-shrink:0;">
-          <svg width="13" height="13" viewBox="0 0 14 14" fill="none"><path d="M7 1L13 7L7 13M1 7H13" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-          Rechercher
+        <button onclick="searchRoute()" style="background:var(--r);color:#fff;border:none;border-radius:11px;padding:10px 14px;font-size:13px;font-weight:800;cursor:pointer;font-family:'DM Sans',sans-serif;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;white-space:nowrap;box-shadow:0 4px 16px rgba(208,2,27,0.4);flex-shrink:0;">
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M7 1L13 7L7 13M1 7H13" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <span style="font-size:11px;">Chercher</span>
         </button>
       </div>
     </div>
 
     <!-- ── CARTE EN BAS — prend tout l'espace restant ── -->
-    <div style="flex:1;position:relative;min-height:0;">
-      <div id="planMap" style="position:absolute;inset:0;"></div>
+    <div style="flex:1;position:relative;min-height:0;overflow:hidden;">
+      <div id="planMap" style="position:absolute;inset:0;z-index:1;"></div>
+
+      <!-- Bandeau péage — visible quand mode péage actif -->
+      <div id="peageInfoBar" style="position:absolute;top:10px;left:10px;right:10px;z-index:10;background:rgba(10,10,10,0.90);border:1px solid rgba(34,197,94,0.35);border-radius:12px;padding:7px 12px;display:flex;align-items:center;gap:8px;backdrop-filter:blur(10px);">
+        <div style="width:8px;height:8px;border-radius:50%;background:#22c55e;box-shadow:0 0 6px #22c55e;animation:blink 1.5s infinite;flex-shrink:0;"></div>
+        <div style="flex:1;">
+          <div style="font-size:11px;font-weight:700;color:#22c55e;">⚡ Autoroute à péage activée</div>
+          <div style="font-size:9px;color:#555;margin-top:1px;" id="peageRouteLabel">VDN · Autoroute AIBD · Péage Malick Sy</div>
+        </div>
+        <div style="font-size:9px;font-weight:700;color:#22c55e;background:rgba(34,197,94,0.1);border:1px solid rgba(34,197,94,0.3);border-radius:8px;padding:3px 8px;white-space:nowrap;">2–3 péages</div>
+      </div>
+
       <!-- Label incidents sur la carte -->
-      <div style="position:absolute;bottom:20px;left:50%;transform:translateX(-50%);z-index:10;background:rgba(12,12,12,0.88);border:1px solid var(--blk3);border-radius:20px;padding:5px 14px;font-size:10px;color:#888;font-weight:600;white-space:nowrap;backdrop-filter:blur(8px);">
+      <div style="position:absolute;bottom:18px;left:50%;transform:translateX(-50%);z-index:10;background:rgba(12,12,12,0.88);border:1px solid var(--blk3);border-radius:20px;padding:5px 14px;font-size:10px;color:#888;font-weight:600;white-space:nowrap;backdrop-filter:blur(8px);">
         📍 Carte temps réel — Dakar
       </div>
     </div>
-    <div class="home-bar"><div class="home-ind"></div></div>
+    <div class="home-bar" style="flex-shrink:0;"><div class="home-ind"></div></div>
   </div>
 
   <!-- ══ RÉSULTAT ══ -->
@@ -793,11 +1016,11 @@ html, body {
       <!-- BARRE MINI : 2 itinéraires + bouton GO -->
       <div class="res-mini-bar" style="gap:8px;padding:0 12px 10px;">
 
-        <!-- Route 1 : Via Av. Bourguiba -->
+        <!-- Route 1 : Via Autoroute / Av. Bourguiba -->
         <div class="res-route-pill sel" id="rpill1" onclick="selectRoutePill(0)" style="flex:1;padding:10px 8px;">
-          <div style="display:flex;align-items:center;gap:5px;margin-bottom:6px;">
+          <div style="display:flex;align-items:center;gap:5px;margin-bottom:4px;">
             <div style="width:8px;height:8px;border-radius:50%;background:#D0021B;flex-shrink:0;"></div>
-            <div style="font-size:8px;font-weight:700;color:#D0021B;letter-spacing:.3px;text-transform:uppercase;">Av. Bourguiba</div>
+            <div id="r1name" style="font-size:8px;font-weight:700;color:#D0021B;letter-spacing:.3px;text-transform:uppercase;">Autoroute · VDN</div>
           </div>
           <div style="display:flex;align-items:baseline;gap:4px;">
             <div class="rp-dur" id="dur1" style="font-size:22px;font-weight:800;color:#fff;line-height:1;">—</div>
@@ -806,7 +1029,10 @@ html, body {
           <div style="display:flex;align-items:center;gap:5px;margin-top:4px;">
             <div class="rp-lbl" id="dist1" style="font-size:11px;font-weight:600;color:#888;">—</div>
             <div style="font-size:9px;color:#555;">km</div>
-            <div style="margin-left:auto;background:rgba(34,197,94,0.12);border-radius:4px;padding:1px 5px;font-size:8px;font-weight:700;color:#22c55e;">⚡ Recommandé</div>
+          </div>
+          <div id="r1toll" style="margin-top:5px;display:flex;align-items:center;gap:3px;">
+            <span style="background:rgba(34,197,94,0.12);border-radius:4px;padding:2px 6px;font-size:8px;font-weight:700;color:#22c55e;">⚡ Recommandé</span>
+            <span style="background:rgba(34,197,94,0.08);border-radius:4px;padding:2px 5px;font-size:8px;color:#3a6a3a;font-weight:600;">🏧 Péage</span>
           </div>
         </div>
 
@@ -815,7 +1041,7 @@ html, body {
 
         <!-- Route 2 : Via Corniche Ouest -->
         <div class="res-route-pill" id="rpill2" onclick="selectRoutePill(1)" style="flex:1;padding:10px 8px;">
-          <div style="display:flex;align-items:center;gap:5px;margin-bottom:6px;">
+          <div style="display:flex;align-items:center;gap:5px;margin-bottom:4px;">
             <div style="width:8px;height:8px;border-radius:50%;background:#22c55e;flex-shrink:0;"></div>
             <div style="font-size:8px;font-weight:700;color:#22c55e;letter-spacing:.3px;text-transform:uppercase;">Corniche Ouest</div>
           </div>
@@ -826,7 +1052,9 @@ html, body {
           <div style="display:flex;align-items:center;gap:5px;margin-top:4px;">
             <div class="rp-lbl" id="dist2" style="font-size:11px;font-weight:600;color:#888;">—</div>
             <div style="font-size:9px;color:#555;">km</div>
-            <div style="margin-left:auto;font-size:8px;color:#555;">Longe l'océan</div>
+          </div>
+          <div style="margin-top:5px;">
+            <span style="background:rgba(255,255,255,0.04);border-radius:4px;padding:2px 6px;font-size:8px;color:#555;font-weight:600;">🛣️ Sans péage</span>
           </div>
         </div>
 
@@ -867,6 +1095,15 @@ html, body {
   <!-- ══ NAVIGATION ══ -->
   <div id="s-nav" class="screen">
     <div class="nav-screen-map">
+      <!-- REROUTE BANNER -->
+      <div id="rerouteBanner">
+        <div class="reroute-spinner" id="rerouteSpinner"></div>
+        <div style="flex:1;">
+          <div style="font-size:12px;font-weight:800;color:#fff;" id="rerouteTitle">🚨 Embouteillage détecté !</div>
+          <div style="font-size:10px;color:rgba(255,255,255,0.7);margin-top:1px;" id="rerouteMsg">Recalcul de l'itinéraire en cours…</div>
+        </div>
+        <button onclick="dismissReroute()" style="background:rgba(255,255,255,0.15);border:none;border-radius:8px;padding:5px 9px;font-size:10px;color:#fff;cursor:pointer;font-family:inherit;">Ignorer</button>
+      </div>
       <div id="navMap" class="map-container" style="position:absolute;inset:0;z-index:1;"></div>
       <div class="map-loading" id="navMapLoading"><div class="map-spinner"></div><div class="map-loading-text">Navigation…</div></div>
 
@@ -1029,20 +1266,108 @@ html, body {
         <div class="pts-row"><div class="pts-row-icon">✅</div><div class="pts-row-info"><div class="pts-row-label">Trajet complété sans incident</div><div class="pts-row-time">Lundi · 14:05</div></div><div class="pts-row-val">+15</div></div>
       </div>
 
-      <!-- RÉCOMPENSES -->
-      <div class="sec-lbl" style="margin-bottom:7px;">Récompenses disponibles</div>
-      <div class="rewards-grid">
-        <div class="reward-card">
-          <div class="reward-icon">⛽</div>
-          <div class="reward-name">Bon carburant 2 000F</div>
-          <div class="reward-cost">500 pts</div>
-          <button class="reward-btn" onclick="claimReward('Bon carburant 2 000F',500)">Échanger</button>
+      <!-- ══ PORTEFEUILLE ÉLECTRONIQUE ══ -->
+      <div class="sec-lbl" style="margin-bottom:7px;">💳 Portefeuille SUNUYOON</div>
+
+      <!-- Solde principal -->
+      <div style="background:linear-gradient(135deg,#0d1f10,#0a1a0d);border:1px solid rgba(34,197,94,0.25);border-radius:14px;padding:14px;margin-bottom:10px;">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+          <div>
+            <div style="font-size:10px;color:#555;font-weight:600;letter-spacing:.5px;text-transform:uppercase;">Solde disponible</div>
+            <div style="font-size:28px;font-weight:800;color:#22c55e;line-height:1.1;" id="walletBalance">6 200 <span style="font-size:14px;font-weight:600;">F CFA</span></div>
+            <div style="font-size:10px;color:#3a5a3a;margin-top:2px;" id="walletPtsVal">≈ 1 240 pts · Niveau Argent 🥈</div>
+          </div>
+          <div style="text-align:center;">
+            <div style="width:52px;height:52px;background:rgba(34,197,94,0.12);border:2px solid rgba(34,197,94,0.3);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:24px;">💳</div>
+          </div>
         </div>
-        <div class="reward-card">
+        <!-- Liens paiement mobile -->
+        <div style="display:flex;gap:6px;">
+          <div onclick="linkWallet('Wave')" style="flex:1;background:rgba(0,114,255,0.12);border:1px solid rgba(0,114,255,0.3);border-radius:10px;padding:8px;text-align:center;cursor:pointer;">
+            <div style="font-size:16px;">🌊</div>
+            <div style="font-size:10px;font-weight:700;color:#60a5fa;margin-top:2px;">Wave</div>
+            <div style="font-size:9px;color:#3a5a7a;" id="waveStatus">Connecté ✓</div>
+          </div>
+          <div onclick="linkWallet('Orange Money')" style="flex:1;background:rgba(249,115,22,0.1);border:1px solid rgba(249,115,22,0.25);border-radius:10px;padding:8px;text-align:center;cursor:pointer;">
+            <div style="font-size:16px;">🟠</div>
+            <div style="font-size:10px;font-weight:700;color:#fb923c;margin-top:2px;">Orange Money</div>
+            <div style="font-size:9px;color:#7a4a2a;" id="omStatus">Connecter →</div>
+          </div>
+          <div onclick="linkWallet('Free Money')" style="flex:1;background:rgba(139,92,246,0.1);border:1px solid rgba(139,92,246,0.25);border-radius:10px;padding:8px;text-align:center;cursor:pointer;">
+            <div style="font-size:16px;">🟣</div>
+            <div style="font-size:10px;font-weight:700;color:#a78bfa;margin-top:2px;">Free Money</div>
+            <div style="font-size:9px;color:#5a3a7a;" id="fmStatus">Connecter →</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Bons disponibles -->
+      <div class="sec-lbl" style="margin-bottom:7px;">🎟️ Mes bons à utiliser</div>
+      <div id="voucherList" style="display:flex;flex-direction:column;gap:7px;margin-bottom:10px;">
+        <!-- Bon 1 -->
+        <div class="voucher-card" id="v1">
+          <div style="display:flex;align-items:center;gap:10px;">
+            <div style="font-size:22px;">⛽</div>
+            <div style="flex:1;">
+              <div style="font-size:12px;font-weight:700;color:#fff;">Bon carburant</div>
+              <div style="font-size:10px;color:#555;">Total Sénégal · Valable 30 jours</div>
+            </div>
+            <div style="text-align:right;">
+              <div style="font-size:14px;font-weight:800;color:#22c55e;">2 000 F</div>
+              <div style="font-size:9px;color:#3a5a3a;">500 pts utilisés</div>
+            </div>
+          </div>
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-top:8px;padding-top:8px;border-top:1px solid #1a2e1a;">
+            <div style="font-family:monospace;font-size:13px;font-weight:700;color:#22c55e;letter-spacing:2px;" id="code-v1">SY-4F8A-2025</div>
+            <button onclick="copyVoucher('v1','SY-4F8A-2025')" style="background:rgba(34,197,94,0.15);border:1px solid rgba(34,197,94,0.3);border-radius:8px;padding:5px 10px;font-size:10px;font-weight:700;color:#22c55e;cursor:pointer;font-family:inherit;">📋 Copier</button>
+          </div>
+        </div>
+        <!-- Bon 2 -->
+        <div class="voucher-card" id="v2">
+          <div style="display:flex;align-items:center;gap:10px;">
+            <div style="font-size:22px;">🅿️</div>
+            <div style="flex:1;">
+              <div style="font-size:12px;font-weight:700;color:#fff;">Parking gratuit 1h</div>
+              <div style="font-size:10px;color:#555;">Parkings partenaires · Expire 15 juin</div>
+            </div>
+            <div style="text-align:right;">
+              <div style="font-size:14px;font-weight:800;color:#22c55e;">Gratuit</div>
+              <div style="font-size:9px;color:#3a5a3a;">300 pts utilisés</div>
+            </div>
+          </div>
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-top:8px;padding-top:8px;border-top:1px solid #1a2e1a;">
+            <div style="font-family:monospace;font-size:13px;font-weight:700;color:#22c55e;letter-spacing:2px;" id="code-v2">SY-PK3B-2025</div>
+            <button onclick="copyVoucher('v2','SY-PK3B-2025')" style="background:rgba(34,197,94,0.15);border:1px solid rgba(34,197,94,0.3);border-radius:8px;padding:5px 10px;font-size:10px;font-weight:700;color:#22c55e;cursor:pointer;font-family:inherit;">📋 Copier</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Échanger des points -->
+      <div class="sec-lbl" style="margin-bottom:7px;">🔄 Échanger mes points</div>
+      <div class="rewards-grid">
+        <div class="reward-card" onclick="claimReward('Bon carburant 2 000F',500,'⛽')">
+          <div class="reward-icon">⛽</div>
+          <div class="reward-name">Carburant 2 000F</div>
+          <div class="reward-cost">500 pts</div>
+          <button class="reward-btn">Obtenir</button>
+        </div>
+        <div class="reward-card" onclick="claimReward('Péage autoroute',400,'🛣️')">
+          <div class="reward-icon">🛣️</div>
+          <div class="reward-name">Pass péage 1 jour</div>
+          <div class="reward-cost">400 pts</div>
+          <button class="reward-btn">Obtenir</button>
+        </div>
+        <div class="reward-card" onclick="claimReward('Crédit Wave 1 000F',300,'🌊')">
+          <div class="reward-icon">🌊</div>
+          <div class="reward-name">Crédit Wave 1 000F</div>
+          <div class="reward-cost">300 pts</div>
+          <button class="reward-btn">Obtenir</button>
+        </div>
+        <div class="reward-card" onclick="claimReward('Parking 1h',250,'🅿️')">
           <div class="reward-icon">🅿️</div>
           <div class="reward-name">Parking gratuit 1h</div>
-          <div class="reward-cost">300 pts</div>
-          <button class="reward-btn" onclick="claimReward('Parking gratuit 1h',300)">Échanger</button>
+          <div class="reward-cost">250 pts</div>
+          <button class="reward-btn">Obtenir</button>
         </div>
         <div class="reward-card locked">
           <div class="reward-icon">🎫</div>
@@ -1051,9 +1376,9 @@ html, body {
           <button class="reward-btn" style="opacity:.4;" disabled>Bientôt</button>
         </div>
         <div class="reward-card locked">
-          <div class="reward-icon">🏆</div>
-          <div class="reward-name">Badge Top Chauffeur</div>
-          <div class="reward-cost">5 000 pts · 🔒</div>
+          <div class="reward-icon">📱</div>
+          <div class="reward-name">Crédit téléphonique</div>
+          <div class="reward-cost">1 000 pts · 🔒</div>
           <button class="reward-btn" style="opacity:.4;" disabled>Bientôt</button>
         </div>
       </div>
@@ -1063,51 +1388,285 @@ html, body {
     <div class="home-bar"><div class="home-ind"></div></div>
   </div>
 
-  <!-- ══ MINISTÈRE DES TRANSPORTS ══ -->
+  <!-- ══ MINISTÈRE DES TRANSPORTS — ADMIN ══ -->
   <div id="s-perturbations" class="screen">
 
-    <!-- HEADER -->
-    <div class="app-header" style="background:linear-gradient(135deg,#0a1628,#0d1f3c);border-bottom:1px solid rgba(59,130,246,0.2);">
-      <button onclick="goTo('s-plan')" style="background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.12);border-radius:10px;padding:7px 13px;font-size:12px;font-weight:600;color:#ccc;cursor:pointer;font-family:'DM Sans',sans-serif;display:flex;align-items:center;gap:6px;transition:all .15s;"><svg width="11" height="11" viewBox="0 0 12 12" fill="none"><path d="M8 2L4 6L8 10" stroke="#CCC" stroke-width="1.5" stroke-linecap="round"/></svg>Retour</button>
-      <div style="display:flex;align-items:center;gap:7px;">
-        <span style="font-size:18px;">🇸🇳</span>
+    <!-- HEADER ADMIN -->
+    <div style="background:linear-gradient(135deg,#060d1a,#0a1628);border-bottom:1px solid rgba(59,130,246,0.25);padding:10px 14px 8px;display:flex;align-items:center;gap:8px;flex-shrink:0;">
+      <button onclick="goTo('s-plan')" style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:9px;padding:6px 10px;font-size:11px;font-weight:600;color:#aaa;cursor:pointer;font-family:'DM Sans',sans-serif;display:flex;align-items:center;gap:5px;">
+        <svg width="10" height="10" viewBox="0 0 12 12" fill="none"><path d="M8 2L4 6L8 10" stroke="#AAA" stroke-width="1.5" stroke-linecap="round"/></svg>Retour
+      </button>
+      <div style="flex:1;display:flex;align-items:center;gap:7px;">
+        <div style="width:30px;height:30px;background:linear-gradient(135deg,#1a4a8a,#0d2f5c);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;">🇸🇳</div>
         <div>
-          <div style="font-size:12px;font-weight:800;color:#fff;letter-spacing:.5px;">MINISTÈRE</div>
-          <div style="font-size:9px;color:rgba(96,165,250,0.8);font-weight:600;">TRANSPORTS · SÉNÉGAL</div>
+          <div style="font-size:11px;font-weight:800;color:#fff;letter-spacing:.6px;line-height:1.1;">MINISTÈRE DES TRANSPORTS</div>
+          <div style="font-size:8px;color:rgba(96,165,250,0.7);font-weight:600;letter-spacing:.3px;">PORTAIL ADMINISTRATEUR · DAKAR</div>
         </div>
       </div>
-      <div style="display:flex;align-items:center;gap:5px;background:rgba(34,197,94,0.12);border:1px solid rgba(34,197,94,0.3);border-radius:20px;padding:4px 9px;">
-        <div style="width:6px;height:6px;border-radius:50%;background:#22c55e;animation:blink 1.5s infinite;"></div>
-        <span style="font-size:9px;font-weight:700;color:#22c55e;">EN DIRECT</span>
+      <div style="display:flex;align-items:center;gap:4px;background:rgba(34,197,94,0.1);border:1px solid rgba(34,197,94,0.25);border-radius:16px;padding:3px 8px;">
+        <div style="width:5px;height:5px;border-radius:50%;background:#22c55e;animation:blink 1.5s infinite;"></div>
+        <span style="font-size:8px;font-weight:700;color:#22c55e;">CONNECTÉ</span>
       </div>
     </div>
 
     <!-- MINISTRY TABS -->
-    <div style="display:flex;background:#0a0f1a;border-bottom:1px solid rgba(59,130,246,0.15);flex-shrink:0;">
-      <div class="min-tab active" id="mtab-stats" onclick="switchMinTab('stats')">📊 Tableau de bord</div>
-      <div class="min-tab" id="mtab-signal" onclick="switchMinTab('signal')">📝 Signaler</div>
+    <div style="display:flex;background:#060d1a;border-bottom:1px solid rgba(59,130,246,0.15);flex-shrink:0;">
+      <div class="min-tab active" id="mtab-stats" onclick="switchMinTab('stats')">📊 Dashboard</div>
       <div class="min-tab" id="mtab-zones" onclick="switchMinTab('zones')">🗺️ Zones</div>
       <div class="min-tab" id="mtab-alerts" onclick="switchMinTab('alerts')">🚨 Alertes</div>
     </div>
 
     <!-- ── TAB : TABLEAU DE BORD ── -->
-    <div class="min-panel active" id="mpanel-stats">
+    <div class="min-panel active" id="mpanel-stats" style="overflow-y:auto;">
       <div style="padding:14px 14px 0;">
-        <!-- KPI ROW -->
-        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px;">
-          <div class="min-kpi" style="border-color:rgba(208,2,27,0.3);">
-            <div class="min-kpi-val" style="color:#ff5f6d;" id="kpiUrgent">4</div>
-            <div class="min-kpi-lbl">Urgentes</div>
+
+        <!-- LIVE BANNER -->
+        <div style="display:flex;align-items:center;gap:8px;background:rgba(59,130,246,0.07);border:1px solid rgba(59,130,246,0.2);border-radius:10px;padding:8px 11px;margin-bottom:12px;">
+          <div style="width:7px;height:7px;border-radius:50%;background:#3B82F6;box-shadow:0 0 6px rgba(59,130,246,0.6);animation:blink 1.5s ease-in-out infinite;"></div>
+          <span style="font-size:11px;color:#93c5fd;font-weight:600;flex:1;">Tableau de bord Ministère des Transports — Dakar</span>
+          <span style="font-size:10px;color:#3B82F6;font-weight:700;" id="dashTime">—</span>
+        </div>
+
+        <!-- KPI ROW (4 blocs) -->
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:12px;">
+          <div class="min-kpi" style="border-color:rgba(208,2,27,0.3);padding:8px 5px;">
+            <div class="min-kpi-val" style="color:#ff5f6d;font-size:22px;" id="kpiUrgent">4</div>
+            <div class="min-kpi-lbl">🚨 Urgentes</div>
           </div>
-          <div class="min-kpi" style="border-color:rgba(245,158,11,0.3);">
-            <div class="min-kpi-val" style="color:#F59E0B;" id="kpiWork">7</div>
-            <div class="min-kpi-lbl">En cours</div>
+          <div class="min-kpi" style="border-color:rgba(245,158,11,0.3);padding:8px 5px;">
+            <div class="min-kpi-val" style="color:#F59E0B;font-size:22px;" id="kpiWork">7</div>
+            <div class="min-kpi-lbl">🏗️ En cours</div>
           </div>
-          <div class="min-kpi" style="border-color:rgba(34,197,94,0.3);">
-            <div class="min-kpi-val" style="color:#22c55e;" id="kpiResolved">23</div>
-            <div class="min-kpi-lbl">Résolues</div>
+          <div class="min-kpi" style="border-color:rgba(34,197,94,0.3);padding:8px 5px;">
+            <div class="min-kpi-val" style="color:#22c55e;font-size:22px;" id="kpiResolved">23</div>
+            <div class="min-kpi-lbl">✅ Résolues</div>
+          </div>
+          <div class="min-kpi" style="border-color:rgba(59,130,246,0.3);padding:8px 5px;">
+            <div class="min-kpi-val" style="color:#60a5fa;font-size:22px;" id="kpiZones">5</div>
+            <div class="min-kpi-lbl">🔴 Zones</div>
           </div>
         </div>
+
+        <!-- GABARITS VÉHICULES — STATS -->
+        <div class="min-card" style="margin-bottom:10px;">
+          <div class="min-card-title" style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+            <span>🚘 Gabarits de véhicules — Rôles</span>
+            <span style="font-size:9px;color:#22c55e;font-weight:700;animation:blink 2s infinite;">● LIVE</span>
+          </div>
+          <!-- Micro -->
+          <div style="display:flex;align-items:center;gap:9px;padding:7px 0;border-bottom:1px solid rgba(255,255,255,0.04);">
+            <div style="width:34px;height:34px;background:rgba(245,158,11,0.1);border:1px solid rgba(245,158,11,0.25);border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:16px;">🏍️</div>
+            <div style="flex:1;min-width:0;">
+              <div style="display:flex;align-items:center;justify-content:space-between;">
+                <div style="font-size:11px;font-weight:800;color:#F59E0B;">Micro — Motos & Deux-roues</div>
+                <div style="font-size:12px;font-weight:800;color:#F59E0B;" id="gbMoto">8 420</div>
+              </div>
+              <div style="font-size:9px;color:#555;margin-top:2px;">Collecte GPS passive · Fluidité inter-voies</div>
+              <div style="height:3px;background:#1a1a1a;border-radius:2px;margin-top:5px;overflow:hidden;"><div style="width:6%;height:100%;background:#F59E0B;border-radius:2px;"></div></div>
+            </div>
+          </div>
+          <!-- Standard -->
+          <div style="display:flex;align-items:center;gap:9px;padding:7px 0;border-bottom:1px solid rgba(255,255,255,0.04);">
+            <div style="width:34px;height:34px;background:rgba(59,130,246,0.1);border:1px solid rgba(59,130,246,0.25);border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:16px;">🚗</div>
+            <div style="flex:1;min-width:0;">
+              <div style="display:flex;align-items:center;justify-content:space-between;">
+                <div style="font-size:11px;font-weight:800;color:#60a5fa;">Standard — Taxis & Voitures</div>
+                <div style="font-size:12px;font-weight:800;color:#60a5fa;" id="gbCar">98 600</div>
+              </div>
+              <div style="font-size:9px;color:#555;margin-top:2px;">Utilisateurs principaux · Signalements actifs</div>
+              <div style="height:3px;background:#1a1a1a;border-radius:2px;margin-top:5px;overflow:hidden;"><div style="width:69%;height:100%;background:#3B82F6;border-radius:2px;animation:trafficPulse 3s infinite;"></div></div>
+            </div>
+          </div>
+          <!-- Moyen -->
+          <div style="display:flex;align-items:center;gap:9px;padding:7px 0;border-bottom:1px solid rgba(255,255,255,0.04);">
+            <div style="width:34px;height:34px;background:rgba(34,197,94,0.1);border:1px solid rgba(34,197,94,0.25);border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:16px;">🚌</div>
+            <div style="flex:1;min-width:0;">
+              <div style="display:flex;align-items:center;justify-content:space-between;">
+                <div style="font-size:11px;font-weight:800;color:#22c55e;">Moyen — Bus Tata & Minibus</div>
+                <div style="font-size:12px;font-weight:800;color:#22c55e;" id="gbBus">3 180</div>
+              </div>
+              <div style="font-size:9px;color:#555;margin-top:2px;">Transport de masse · Suivi lignes régulières</div>
+              <div style="height:3px;background:#1a1a1a;border-radius:2px;margin-top:5px;overflow:hidden;"><div style="width:22%;height:100%;background:#22c55e;border-radius:2px;"></div></div>
+            </div>
+          </div>
+          <!-- Lourd -->
+          <div style="display:flex;align-items:center;gap:9px;padding:7px 0;">
+            <div style="width:34px;height:34px;background:rgba(208,2,27,0.1);border:1px solid rgba(208,2,27,0.25);border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:16px;">🚛</div>
+            <div style="flex:1;min-width:0;">
+              <div style="display:flex;align-items:center;justify-content:space-between;">
+                <div style="font-size:11px;font-weight:800;color:#ff5f6d;">Lourd — Camions & Bus DDD</div>
+                <div style="font-size:12px;font-weight:800;color:#ff5f6d;" id="gbTruck">2 140</div>
+              </div>
+              <div style="font-size:9px;color:#555;margin-top:2px;">Impact majeur congestion · Priorité signalement</div>
+              <div style="height:3px;background:#1a1a1a;border-radius:2px;margin-top:5px;overflow:hidden;"><div style="width:2%;height:100%;background:#D0021B;border-radius:2px;"></div></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- VÉHICULES EN CIRCULATION (LIVE SIMULÉ) -->
+        <div class="min-card" style="margin-bottom:10px;">
+          <div class="min-card-title" style="display:flex;align-items:center;justify-content:space-between;">
+            <span>🚗 Véhicules en circulation — Dakar</span>
+            <span style="font-size:9px;color:#22c55e;font-weight:700;animation:blink 2s infinite;">● LIVE</span>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px;">
+            <div style="background:#0a1628;border:1px solid rgba(59,130,246,0.15);border-radius:9px;padding:9px;text-align:center;">
+              <div style="font-size:20px;font-weight:800;color:#60a5fa;" id="cntVeh">142 380</div>
+              <div style="font-size:9px;color:#555;margin-top:2px;">Véhicules / heure</div>
+            </div>
+            <div style="background:#0a1628;border:1px solid rgba(34,197,94,0.15);border-radius:9px;padding:9px;text-align:center;">
+              <div style="font-size:20px;font-weight:800;color:#22c55e;" id="cntFlow">Fluide</div>
+              <div style="font-size:9px;color:#555;margin-top:2px;">État général</div>
+            </div>
+          </div>
+
+          <!-- ── GABARITS VÉHICULES : Compteur par type ── -->
+          <div class="vcount-grid" id="vcountGrid">
+            <div class="vcount-card">
+              <div class="vcount-shape veh veh-moto" style="position:relative;top:auto;transform:none;width:14px;height:8px;margin:0 auto 4px;"></div>
+              <div class="vcount-val" style="color:#F59E0B;" id="vcMoto">8 420</div>
+              <div class="vcount-lbl">Motos</div>
+            </div>
+            <div class="vcount-card">
+              <div class="vcount-shape veh veh-car" style="position:relative;top:auto;transform:none;width:20px;height:11px;margin:0 auto 4px;"></div>
+              <div class="vcount-val" style="color:#3B82F6;" id="vcCar">98 600</div>
+              <div class="vcount-lbl">Voitures</div>
+            </div>
+            <div class="vcount-card">
+              <div class="vcount-shape veh veh-bus" style="position:relative;top:auto;transform:none;width:26px;height:11px;margin:0 auto 4px;"></div>
+              <div class="vcount-val" style="color:#16a34a;" id="vcBus">3 180</div>
+              <div class="vcount-lbl">Bus</div>
+            </div>
+            <div class="vcount-card">
+              <div class="vcount-shape veh veh-truck" style="position:relative;top:auto;transform:none;width:30px;height:12px;margin:0 auto 4px;"></div>
+              <div class="vcount-val" style="color:#D0021B;" id="vcTruck">2 140</div>
+              <div class="vcount-lbl">Camions</div>
+            </div>
+          </div>
+
+          <!-- ── SIMULATEUR VISUEL — ROUTES ANIMÉES ── -->
+          <div style="margin-top:10px;">
+            <div style="font-size:9px;font-weight:700;color:#555;letter-spacing:.5px;text-transform:uppercase;margin-bottom:6px;display:flex;align-items:center;justify-content:space-between;">
+              <span>🛣️ Simulation trafic en temps réel</span>
+              <button onclick="toggleTrafficSim()" id="simToggleBtn" style="background:rgba(59,130,246,0.1);border:1px solid rgba(59,130,246,0.3);border-radius:6px;padding:2px 7px;font-size:9px;color:#60a5fa;cursor:pointer;font-family:inherit;font-weight:700;">⏸ Pause</button>
+            </div>
+
+            <!-- Voie 1 : VDN — Fluide -->
+            <div class="traffic-road" style="margin-bottom:8px;padding:6px 8px;">
+              <div style="font-size:9px;color:#22c55e;font-weight:700;margin-bottom:4px;display:flex;align-items:center;gap:5px;">
+                <span style="width:7px;height:7px;border-radius:50%;background:#22c55e;display:inline-block;box-shadow:0 0 5px #22c55e88;"></span>
+                VDN — Fluide
+              </div>
+              <div class="road-lane">
+                <!-- Motos rapides -->
+                <div class="veh veh-moto" style="animation:vehDrive1 3.5s linear infinite; top:30%;"></div>
+                <div class="veh veh-moto" style="animation:vehDrive1 4.2s linear infinite 1.8s; top:65%;"></div>
+                <!-- Voitures -->
+                <div class="veh veh-car" style="animation:vehDrive2 5.5s linear infinite 0.5s;"></div>
+                <div class="veh veh-car" style="animation:vehDrive2 5.0s linear infinite 3.2s;"></div>
+                <!-- Taxi -->
+                <div class="veh veh-taxi" style="animation:vehDrive3 4.8s linear infinite 2.1s;"></div>
+              </div>
+              <div class="road-lane">
+                <div class="veh veh-bus" style="animation:vehDrive4 7s linear infinite 1s;"></div>
+                <div class="veh veh-car" style="animation:vehDrive1 5.2s linear infinite 4s;"></div>
+                <div class="veh veh-taxi" style="animation:vehDrive3 4.5s linear infinite 0.3s;"></div>
+              </div>
+            </div>
+
+            <!-- Voie 2 : Av. Bourguiba — Dense -->
+            <div class="traffic-road" style="margin-bottom:8px;padding:6px 8px;background:#1a1200;border-color:rgba(245,158,11,0.25);">
+              <div style="font-size:9px;color:#F59E0B;font-weight:700;margin-bottom:4px;display:flex;align-items:center;gap:5px;">
+                <span style="width:7px;height:7px;border-radius:50%;background:#F59E0B;display:inline-block;animation:blink 1.5s infinite;box-shadow:0 0 5px #F59E0B88;"></span>
+                Av. Bourguiba — Dense (+8 min)
+              </div>
+              <div class="road-lane">
+                <!-- Véhicules lents -->
+                <div class="veh veh-car veh-slow" style="animation:vehDriveSlw 9s linear infinite 0s;"></div>
+                <div class="veh veh-bus veh-slow" style="animation:vehDriveSlw 11s linear infinite 2s;"></div>
+                <div class="veh veh-taxi veh-slow" style="animation:vehDriveSlw 8.5s linear infinite 4.5s;"></div>
+                <div class="veh veh-moto" style="animation:vehDrive2 6s linear infinite 1.5s; top:25%;"></div>
+              </div>
+              <div class="road-lane">
+                <div class="veh veh-car veh-slow" style="animation:vehDriveSlw 10s linear infinite 3s;"></div>
+                <div class="veh veh-truck veh-slow" style="animation:vehDriveSlw 13s linear infinite 0.5s;"></div>
+                <div class="veh veh-taxi veh-slow" style="animation:vehDriveSlw 9s linear infinite 6s;"></div>
+              </div>
+            </div>
+
+            <!-- Voie 3 : Autoroute AIBD — Saturé -->
+            <div class="traffic-road" style="padding:6px 8px;background:#1a0a0a;border-color:rgba(208,2,27,0.3);">
+              <div style="font-size:9px;color:#D0021B;font-weight:700;margin-bottom:4px;display:flex;align-items:center;gap:5px;">
+                <span style="width:7px;height:7px;border-radius:50%;background:#D0021B;display:inline-block;animation:blink 0.8s infinite;box-shadow:0 0 5px #D0021B88;"></span>
+                Autoroute AIBD — Saturé 🚨 (+35 min)
+              </div>
+              <div class="road-lane">
+                <!-- Véhicules quasi-immobiles -->
+                <div class="veh veh-car veh-stuck" style="left:10%;"></div>
+                <div class="veh veh-truck veh-stuck" style="left:32%;"></div>
+                <div class="veh veh-car veh-stuck" style="left:54%;"></div>
+                <div class="veh veh-bus veh-stuck" style="left:72%;"></div>
+                <div class="veh veh-taxi veh-stuck" style="left:88%;"></div>
+              </div>
+              <div class="road-lane">
+                <div class="veh veh-bus veh-stuck" style="left:5%;"></div>
+                <div class="veh veh-car veh-stuck" style="left:28%;"></div>
+                <div class="veh veh-car veh-stuck" style="left:48%;"></div>
+                <div class="veh veh-truck veh-stuck" style="left:66%;"></div>
+                <div class="veh veh-moto" style="animation:vehDriveSlw 12s linear infinite; top:20%;"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Légende -->
+          <div class="veh-legend" style="margin-top:10px;">
+            <div class="vleg-item"><div class="vleg-shape veh veh-moto" style="position:relative;top:auto;transform:none;width:14px;height:7px;"></div>Moto</div>
+            <div class="vleg-item"><div class="vleg-shape veh veh-car" style="position:relative;top:auto;transform:none;width:18px;height:10px;"></div>Voiture</div>
+            <div class="vleg-item"><div class="vleg-shape veh veh-taxi" style="position:relative;top:auto;transform:none;width:18px;height:10px;"></div>Taxi</div>
+            <div class="vleg-item"><div class="vleg-shape veh veh-bus" style="position:relative;top:auto;transform:none;width:24px;height:10px;"></div>Bus DDD</div>
+            <div class="vleg-item"><div class="vleg-shape veh veh-truck" style="position:relative;top:auto;transform:none;width:28px;height:11px;"></div>Camion</div>
+          </div>
+
+          <!-- Axes principaux (barres de charge) -->
+          <div style="margin-top:10px;display:flex;flex-direction:column;gap:5px;">
+            <div style="display:flex;align-items:center;gap:7px;font-size:10px;">
+              <div style="width:8px;height:8px;border-radius:50%;background:#22c55e;flex-shrink:0;"></div>
+              <span style="color:#aaa;flex:1;">VDN</span>
+              <div style="flex:2;height:5px;background:#1a1a1a;border-radius:3px;overflow:hidden;"><div style="height:100%;width:30%;background:#22c55e;border-radius:3px;"></div></div>
+              <span style="color:#22c55e;font-weight:700;min-width:28px;text-align:right;">Fluide</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:7px;font-size:10px;">
+              <div style="width:8px;height:8px;border-radius:50%;background:#F59E0B;flex-shrink:0;"></div>
+              <span style="color:#aaa;flex:1;">Av. Bourguiba</span>
+              <div style="flex:2;height:5px;background:#1a1a1a;border-radius:3px;overflow:hidden;"><div style="height:100%;width:72%;background:#F59E0B;border-radius:3px;animation:trafficPulse 3s infinite;"></div></div>
+              <span style="color:#F59E0B;font-weight:700;min-width:28px;text-align:right;">Dense</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:7px;font-size:10px;">
+              <div style="width:8px;height:8px;border-radius:50%;background:#D0021B;flex-shrink:0;"></div>
+              <span style="color:#aaa;flex:1;">Autoroute AIBD</span>
+              <div style="flex:2;height:5px;background:#1a1a1a;border-radius:3px;overflow:hidden;"><div style="height:100%;width:95%;background:#D0021B;border-radius:3px;"></div></div>
+              <span style="color:#D0021B;font-weight:700;min-width:28px;text-align:right;">Saturé</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:7px;font-size:10px;">
+              <div style="width:8px;height:8px;border-radius:50%;background:#22c55e;flex-shrink:0;"></div>
+              <span style="color:#aaa;flex:1;">Corniche Ouest</span>
+              <div style="flex:2;height:5px;background:#1a1a1a;border-radius:3px;overflow:hidden;"><div style="height:100%;width:40%;background:#22c55e;border-radius:3px;"></div></div>
+              <span style="color:#22c55e;font-weight:700;min-width:28px;text-align:right;">Fluide</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- FEUX DE SIGNALISATION SIMULÉS -->
+        <div class="min-card" style="margin-bottom:10px;">
+          <div class="min-card-title" style="display:flex;align-items:center;justify-content:space-between;">
+            <span>🚦 Feux de signalisation — Carrefours clés</span>
+            <button onclick="refreshLights()" style="background:rgba(59,130,246,0.1);border:1px solid rgba(59,130,246,0.3);border-radius:6px;padding:3px 8px;font-size:9px;color:#60a5fa;cursor:pointer;font-family:inherit;font-weight:700;">🔄 Rafraîchir</button>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:6px;margin-top:10px;" id="lightsGrid">
+            <!-- Injecté par JS -->
+          </div>
+        </div>
+
         <!-- CHART SIGNALEMENTS 7 JOURS -->
         <div class="min-card" style="margin-bottom:10px;">
           <div class="min-card-title">📈 Signalements — 7 derniers jours</div>
@@ -1118,9 +1677,10 @@ html, body {
             <div class="bar-wrap"><div class="bar-col" style="height:80%;background:#D0021B;"></div><div class="bar-day">Jeu</div></div>
             <div class="bar-wrap"><div class="bar-col" style="height:55%;background:#F59E0B;"></div><div class="bar-day">Ven</div></div>
             <div class="bar-wrap"><div class="bar-col" style="height:90%;background:#D0021B;"></div><div class="bar-day">Sam</div></div>
-            <div class="bar-wrap"><div class="bar-col" style="height:45%;background:#22c55e;"></div><div class="bar-day">Auj</div></div>
+            <div class="bar-wrap"><div class="bar-col" style="height:45%;background:#22c55e;" id="todayBar"></div><div class="bar-day">Auj</div></div>
           </div>
         </div>
+
         <!-- STATS PAR TYPE -->
         <div class="min-card" style="margin-bottom:10px;">
           <div class="min-card-title">📋 Répartition par type</div>
@@ -1131,8 +1691,9 @@ html, body {
             <div class="stat-row"><span>🚫 Fermetures</span><div class="stat-bar-wrap"><div class="stat-bar" style="width:4%;background:#8B5CF6;"></div></div><span style="color:#8B5CF6;font-weight:700;min-width:28px;text-align:right;">4%</span></div>
           </div>
         </div>
+
         <!-- TOP ZONES -->
-        <div class="min-card">
+        <div class="min-card" style="margin-bottom:10px;">
           <div class="min-card-title">📍 Zones les plus touchées</div>
           <div style="margin-top:8px;display:flex;flex-direction:column;gap:6px;">
             <div class="zone-rank"><span class="zone-rank-num">1</span><span class="zone-rank-name">Autoroute AIBD</span><span class="zone-rank-count" style="color:#D0021B;">12 incidents</span></div>
@@ -1141,136 +1702,107 @@ html, body {
             <div class="zone-rank"><span class="zone-rank-num">4</span><span class="zone-rank-name">Médina / Av. Bourguiba</span><span class="zone-rank-count" style="color:#22c55e;">4 incidents</span></div>
           </div>
         </div>
+
+        <!-- EXPORT RAPPORT -->
+        <div style="display:flex;gap:7px;margin-bottom:14px;">
+          <button onclick="exportRapport()" style="flex:1;background:rgba(59,130,246,0.1);border:1px solid rgba(59,130,246,0.3);border-radius:10px;padding:10px;font-size:11px;font-weight:700;color:#60a5fa;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:5px;">📄 Exporter rapport PDF</button>
+          <button onclick="switchMinTab('alerts')" style="flex:1;background:rgba(245,158,11,0.08);border:1px solid rgba(245,158,11,0.25);border-radius:10px;padding:10px;font-size:11px;font-weight:700;color:#F59E0B;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:5px;">🚨 Voir les alertes</button>
+        </div>
+
       </div>
     </div>
 
-    <!-- ── TAB : SIGNALER TRAVAUX ── -->
-    <div class="min-panel" id="mpanel-signal" style="overflow-y:auto;">
-      <div style="padding:14px;">
-        <div class="min-card" style="margin-bottom:10px;">
-          <div class="min-card-title" style="margin-bottom:10px;">🏗️ Signaler des travaux / perturbation</div>
-          <div style="display:flex;flex-direction:column;gap:8px;">
-            <div>
-              <div class="form-lbl">Type d'incident *</div>
-              <select id="sigType" class="form-select">
-                <option value="">— Sélectionner —</option>
-                <option>🏗️ Travaux de voirie</option>
-                <option>🚨 Accident de la route</option>
-                <option>🌊 Inondation / accumulation d'eau</option>
-                <option>🚫 Fermeture de route</option>
-                <option>🚧 Route barrée / déviation</option>
-                <option>⚡ Panne de feux de signalisation</option>
-                <option>🏚️ Effondrement / dégradation</option>
-              </select>
-            </div>
-            <div>
-              <div class="form-lbl">Localisation précise *</div>
-              <input type="text" id="sigLoc" class="form-input" placeholder="Ex : Av. Cheikh Anta Diop, UCAD, Dakar"/>
-            </div>
-            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
-              <div>
-                <div class="form-lbl">Date de début *</div>
-                <input type="date" id="sigDateStart" class="form-input"/>
-              </div>
-              <div>
-                <div class="form-lbl">Date de fin prévue</div>
-                <input type="date" id="sigDateEnd" class="form-input"/>
-              </div>
-            </div>
-            <div>
-              <div class="form-lbl">Niveau de gravité</div>
-              <div style="display:flex;gap:6px;margin-top:4px;">
-                <div class="grav-btn active" id="grav-info" onclick="setGrav('info')">ℹ️ Info</div>
-                <div class="grav-btn" id="grav-warn" onclick="setGrav('warn')">⚠️ Attention</div>
-                <div class="grav-btn" id="grav-urg" onclick="setGrav('urg')">🚨 Urgence</div>
-              </div>
-            </div>
-            <div>
-              <div class="form-lbl">Description</div>
-              <textarea id="sigDesc" class="form-input" rows="3" placeholder="Décrivez la situation, les voies affectées, les déviations recommandées…" style="resize:none;"></textarea>
-            </div>
-            <div>
-              <div class="form-lbl">Source / Organisme</div>
-              <input type="text" id="sigSource" class="form-input" placeholder="Ex : ONAS, Mairie de Dakar, Gendarmerie…"/>
+    <!-- ── TAB : ZONES — ENCERCLEMENT ── -->
+    <div class="min-panel" id="mpanel-zones" style="flex-direction:column;background:#060d1a;">
+
+      <!-- Controls panel -->
+      <div style="padding:10px 14px;background:#060d1a;border-bottom:1px solid rgba(59,130,246,0.12);flex-shrink:0;">
+
+        <!-- Titre section -->
+        <div style="display:flex;align-items:center;gap:7px;margin-bottom:10px;">
+          <span style="width:26px;height:26px;background:rgba(208,2,27,0.12);border:1px solid rgba(208,2,27,0.3);border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:13px;">🔴</span>
+          <div>
+            <div style="font-size:11px;font-weight:800;color:#ff5f6d;letter-spacing:.3px;">Encercler une zone de travaux</div>
+            <div style="font-size:9px;color:#4a3040;margin-top:1px;">Délimite visuellement la zone affectée sur la carte</div>
+          </div>
+        </div>
+
+        <!-- Sélecteur quartier + rayon -->
+        <div style="display:flex;gap:7px;margin-bottom:7px;">
+          <div style="flex:1;position:relative;">
+            <select id="encircleZone" style="width:100%;background:#0a1220;border:1px solid rgba(208,2,27,0.3);border-radius:9px;padding:8px 28px 8px 10px;font-size:11px;font-weight:600;color:#f87171;font-family:'DM Sans',sans-serif;appearance:none;outline:none;">
+              <option value="">— Choisir un quartier —</option>
+              <optgroup label="Dakar Centre">
+                <option value="plateau|14.6951|-17.4439|700">🏙️ Plateau</option>
+                <option value="medina|14.6917|-17.4567|600">🏘️ Médina</option>
+                <option value="fann|14.6979|-17.4629|500">🏥 Fann / Point E</option>
+                <option value="ucad|14.6929|-17.4680|400">🎓 Zone UCAD</option>
+              </optgroup>
+              <optgroup label="Périphérie">
+                <option value="hann|14.7110|-17.4130|700">🏭 Hann Bel Air</option>
+                <option value="yeumbeul|14.7750|-17.3600|800">🌊 Yeumbeul Nord</option>
+                <option value="pikine|14.7513|-17.3948|900">🏗️ Pikine</option>
+                <option value="guediawaye|14.7739|-17.4038|700">🏙️ Guédiawaye</option>
+                <option value="parcelles|14.7589|-17.4315|800">🏘️ Parcelles Assainies</option>
+              </optgroup>
+              <optgroup label="Axes">
+                <option value="vdn|14.7230|-17.4400|600">🛣️ VDN (échangeur)</option>
+                <option value="corniche|14.7050|-17.4850|500">🌊 Corniche Ouest</option>
+                <option value="autoroute|14.7100|-17.3800|900">🛣️ Autoroute AIBD</option>
+              </optgroup>
+            </select>
+            <div style="position:absolute;right:9px;top:50%;transform:translateY(-50%);pointer-events:none;">
+              <svg width="10" height="7" viewBox="0 0 12 8" fill="none"><path d="M1 1L6 7L11 1" stroke="#f87171" stroke-width="1.8" stroke-linecap="round"/></svg>
             </div>
           </div>
-          <button class="btn-main" style="margin-top:12px;" onclick="submitSignalement()">
-            <svg width="13" height="13" viewBox="0 0 14 14" fill="none"><path d="M7 1L13 7L7 13M1 7H13" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-            Soumettre au Ministère
+          <div style="display:flex;flex-direction:column;gap:2px;">
+            <div style="font-size:8px;color:#4a3040;font-weight:600;text-align:center;">Rayon (m)</div>
+            <input type="number" id="encircleRadius" value="500" min="100" max="3000" step="100"
+              style="width:68px;background:#0a1220;border:1px solid rgba(208,2,27,0.3);border-radius:9px;padding:8px 6px;font-size:12px;font-weight:700;color:#f87171;font-family:'DM Sans',sans-serif;outline:none;text-align:center;"/>
+          </div>
+        </div>
+
+        <!-- Boutons actions -->
+        <div style="display:flex;gap:7px;margin-bottom:0;">
+          <button onclick="doEncircle()" style="flex:1;background:linear-gradient(135deg,rgba(208,2,27,0.2),rgba(208,2,27,0.1));border:1px solid rgba(208,2,27,0.45);border-radius:9px;padding:9px;font-size:11px;font-weight:800;color:#ff5f6d;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:5px;">
+            🔴 Encercler la zone
           </button>
-        </div>
-        <!-- SIGNALEMENTS RÉCENTS -->
-        <div class="min-card-title" style="margin-bottom:8px;">📋 Signalements récents</div>
-        <div id="sigHistory">
-          <div class="sig-item"><div class="sig-dot" style="background:#F59E0B;"></div><div class="sig-body"><div class="sig-title">🏗️ Travaux — Pont de Hann</div><div class="sig-meta">12 mai 2025 → 30 juin 2025 · ONAS</div><div class="sig-status warn">⚠️ En cours</div></div></div>
-          <div class="sig-item"><div class="sig-dot" style="background:#D0021B;"></div><div class="sig-body"><div class="sig-title">🚨 Accident — RN1 Thiès</div><div class="sig-meta">10 mai 2025 · Gendarmerie</div><div class="sig-status urg">🚨 Urgente</div></div></div>
-          <div class="sig-item"><div class="sig-dot" style="background:#22c55e;"></div><div class="sig-body"><div class="sig-title">🚫 Fermeture — Av. Bourguiba</div><div class="sig-meta">8 mai → 9 mai 2025 · Mairie</div><div class="sig-status ok">✅ Résolue</div></div></div>
-          <div class="sig-item"><div class="sig-dot" style="background:#3B82F6;"></div><div class="sig-body"><div class="sig-title">🌊 Inondation — Yeumbeul Nord</div><div class="sig-meta">Depuis le 9 mai 2025 · Préfecture</div><div class="sig-status urg">🚨 Active</div></div></div>
+          <button onclick="clearEncircles()" style="background:#0a1220;border:1px solid rgba(255,255,255,0.08);border-radius:9px;padding:9px 12px;font-size:11px;color:#444;cursor:pointer;font-family:inherit;">✕</button>
         </div>
       </div>
-    </div>
 
-    <!-- ── TAB : ZONES ── -->
-    <div class="min-panel" id="mpanel-zones" style="display:flex;flex-direction:column;">
-      <!-- Zone selector — menu déroulant -->
-      <div style="padding:10px 14px;background:#0a0f1a;border-bottom:1px solid rgba(59,130,246,0.1);flex-shrink:0;">
-        <div class="form-lbl" style="margin-bottom:6px;">📍 Sélectionner une commune de Dakar</div>
-        <div style="position:relative;">
-          <select id="zoneSelect" onchange="onZoneSelect(this)" style="width:100%;background:#0f1929;border:1px solid rgba(59,130,246,0.3);border-radius:10px;padding:10px 36px 10px 12px;font-size:13px;font-weight:600;color:#93c5fd;font-family:'DM Sans',sans-serif;appearance:none;-webkit-appearance:none;cursor:pointer;outline:none;">
-            <optgroup label="── Vue globale ──">
-              <option value="all|14.6937|-17.4441|12">🗺️ Tout Dakar — 14 incidents</option>
-            </optgroup>
-            <optgroup label="── Communes de Dakar ──">
-              <option value="plateau|14.6951|-17.4439|14">🏙️ Plateau — 3 incidents</option>
-              <option value="medina|14.6917|-17.4567|14">🏘️ Médina — 4 incidents</option>
-              <option value="bel-air|14.6840|-17.4250|15">🌊 Bel Air / Hann</option>
-              <option value="fann|14.6979|-17.4629|15">🏥 Fann — Point E — Amitié</option>
-              <option value="gueule-tapee|14.6920|-17.4500|15">🏠 Gueule Tapée — Fass — Colobane</option>
-              <option value="grand-dakar|14.7020|-17.4455|14">🏘️ Grand Dakar</option>
-              <option value="hlm|14.7000|-17.4600|15">🏗️ HLM</option>
-              <option value="liberte|14.7053|-17.4580|15">🏢 Liberté — Sicap</option>
-              <option value="dieuppeul|14.7080|-17.4620|15">🏠 Dieuppeul — Derklé</option>
-            </optgroup>
-            <optgroup label="── Communes (périphérie) ──">
-              <option value="ouakam|14.7313|-17.5012|14">⛪ Ouakam</option>
-              <option value="ngor|14.7488|-17.5107|15">🏖️ Ngor — Almadies</option>
-              <option value="yoff|14.7445|-17.4900|14">✈️ Yoff / AIBD — 5 incidents</option>
-              <option value="parcelles|14.7589|-17.4315|14">🏘️ Parcelles Assainies</option>
-              <option value="camberene|14.7560|-17.4560|15">🌿 Cambérène</option>
-            </optgroup>
-            <optgroup label="── Banlieue ──">
-              <option value="guediawaye|14.7739|-17.4038|13">🏙️ Guédiawaye</option>
-              <option value="pikine|14.7513|-17.3948|13">🏗️ Pikine — 6 incidents</option>
-              <option value="yeumbeul|14.7750|-17.3600|14">🌊 Yeumbeul Nord</option>
-              <option value="thiaroye|14.7274|-17.3688|14">🚌 Thiaroye</option>
-              <option value="mbao|14.7283|-17.3200|14">🏭 Mbao</option>
-              <option value="keur-massar|14.7820|-17.3360|13">🏘️ Keur Massar</option>
-              <option value="rufisque|14.7155|-17.2756|13">⚓ Rufisque</option>
-              <option value="diamniadio|14.7220|-17.1860|13">🏛️ Diamniadio</option>
-            </optgroup>
-            <optgroup label="── Axes principaux ──">
-              <option value="vdn|14.7200|-17.4400|13">🛣️ VDN — 2 incidents</option>
-              <option value="corniche|14.7050|-17.4850|14">🌊 Corniche Ouest</option>
-              <option value="autoroute|14.7100|-17.3800|12">🛣️ Autoroute AIBD</option>
-            </optgroup>
+      <!-- Sélecteur vue commune (compact) -->
+      <div style="padding:6px 14px;background:#060d1a;border-bottom:1px solid rgba(59,130,246,0.08);flex-shrink:0;display:flex;align-items:center;gap:8px;">
+        <span style="font-size:9px;color:#3B5A8A;font-weight:700;white-space:nowrap;">📍 Vue :</span>
+        <div style="flex:1;position:relative;">
+          <select id="zoneSelect" onchange="onZoneSelect(this)" style="width:100%;background:#0a1220;border:1px solid rgba(59,130,246,0.2);border-radius:8px;padding:6px 28px 6px 10px;font-size:11px;font-weight:600;color:#93c5fd;font-family:'DM Sans',sans-serif;appearance:none;-webkit-appearance:none;cursor:pointer;outline:none;">
+            <option value="all|14.6937|-17.4441|12">🗺️ Tout Dakar</option>
+            <option value="plateau|14.6951|-17.4439|14">🏙️ Plateau</option>
+            <option value="medina|14.6917|-17.4567|14">🏘️ Médina</option>
+            <option value="fann|14.6979|-17.4629|15">🏥 Fann / UCAD</option>
+            <option value="yoff|14.7445|-17.4900|14">✈️ Yoff / AIBD</option>
+            <option value="pikine|14.7513|-17.3948|13">🏗️ Pikine</option>
+            <option value="yeumbeul|14.7750|-17.3600|14">🌊 Yeumbeul</option>
+            <option value="vdn|14.7200|-17.4400|13">🛣️ VDN</option>
           </select>
-          <div style="position:absolute;right:12px;top:50%;transform:translateY(-50%);pointer-events:none;">
-            <svg width="12" height="8" viewBox="0 0 12 8" fill="none"><path d="M1 1L6 7L11 1" stroke="#93c5fd" stroke-width="1.8" stroke-linecap="round"/></svg>
+          <div style="position:absolute;right:8px;top:50%;transform:translateY(-50%);pointer-events:none;">
+            <svg width="10" height="7" viewBox="0 0 12 8" fill="none"><path d="M1 1L6 7L11 1" stroke="#93c5fd" stroke-width="1.8" stroke-linecap="round"/></svg>
           </div>
         </div>
       </div>
-      <!-- Map -->
+
+      <!-- Map full -->
       <div style="flex:1;position:relative;min-height:0;">
         <div id="perturbMap" style="position:absolute;inset:0;z-index:1;"></div>
-        <!-- Zone overlay label -->
-        <div id="zoneLabel" style="position:absolute;top:10px;left:50%;transform:translateX(-50%);z-index:10;background:rgba(10,15,26,0.9);border:1px solid rgba(59,130,246,0.3);border-radius:20px;padding:4px 14px;font-size:11px;font-weight:700;color:#93c5fd;white-space:nowrap;">📍 Tout Dakar — 14 incidents</div>
+        <div id="zoneLabel" style="position:absolute;top:8px;left:50%;transform:translateX(-50%);z-index:10;background:rgba(6,13,26,0.92);border:1px solid rgba(59,130,246,0.3);border-radius:20px;padding:3px 12px;font-size:10px;font-weight:700;color:#93c5fd;white-space:nowrap;max-width:85%;overflow:hidden;text-overflow:ellipsis;">📍 Tout Dakar — 14 incidents</div>
       </div>
-      <!-- Zone summary -->
-      <div id="zoneSummary" style="padding:10px 14px;background:#0a0f1a;border-top:1px solid rgba(59,130,246,0.1);flex-shrink:0;display:flex;gap:10px;align-items:center;">
-        <div style="flex:1;font-size:11px;color:#aaa;" id="zoneDesc">Affichage de toutes les perturbations actives sur Dakar et sa banlieue.</div>
-        <div style="background:rgba(208,2,27,0.15);border:1px solid rgba(208,2,27,0.3);border-radius:8px;padding:5px 10px;text-align:center;flex-shrink:0;">
-          <div style="font-size:16px;font-weight:800;color:#ff5f6d;" id="zoneCount">14</div>
-          <div style="font-size:9px;color:#777;">incidents</div>
+
+      <!-- Barre résumé -->
+      <div id="zoneSummary" style="padding:7px 14px;background:#060d1a;border-top:1px solid rgba(59,130,246,0.1);flex-shrink:0;display:flex;gap:8px;align-items:center;">
+        <div style="flex:1;font-size:10px;color:#666;" id="zoneDesc">Toutes les perturbations actives sur Dakar.</div>
+        <div style="background:rgba(208,2,27,0.12);border:1px solid rgba(208,2,27,0.25);border-radius:7px;padding:4px 9px;text-align:center;flex-shrink:0;">
+          <div style="font-size:14px;font-weight:800;color:#ff5f6d;" id="zoneCount">14</div>
+          <div style="font-size:8px;color:#555;">incidents</div>
         </div>
       </div>
     </div>
@@ -1720,6 +2252,14 @@ async function initResultMap() {
     document.getElementById('routeAlert').textContent = 'Ralentissement sur route principale (+'+Math.round(dur1*0.15)+' min estimé)';
     document.getElementById('navDuration').textContent = dur1+' min';
     document.getElementById('navDist').textContent = dist1+' km';
+
+    // Route name based on mode
+    const isPeage = !window.currentMode || window.currentMode === 'peage';
+    const r1nameEl = document.getElementById('r1name');
+    const r1tollEl = document.getElementById('r1toll');
+    if (r1nameEl) r1nameEl.textContent = isPeage ? 'Autoroute · VDN' : 'Av. Bourguiba';
+    if (r1tollEl) r1tollEl.style.display = isPeage ? 'flex' : 'none';
+
     const arr = new Date(Date.now()+dur1*60000);
     document.getElementById('navArrival').textContent = arr.getHours().toString().padStart(2,'0')+':'+arr.getMinutes().toString().padStart(2,'0');
 
@@ -1733,6 +2273,17 @@ async function initResultMap() {
     const icon = L.divIcon({ html:`<div style="background:${inc.color};color:white;border-radius:50%;width:24px;height:24px;display:flex;align-items:center;justify-content:center;font-size:12px;border:2px solid white;box-shadow:0 2px 6px rgba(0,0,0,0.5);">${inc.emoji}</div>`, iconSize:[24,24], iconAnchor:[12,12], className:'' });
     L.marker(inc.latlng, {icon}).addTo(maps.result).bindPopup(inc.label);
   });
+
+  // Péage markers on result map if mode is active
+  if (!window.currentMode || window.currentMode === 'peage') {
+    const tollIcons = TOLL_POINTS.map(p => {
+      const icon = L.divIcon({
+        html:`<div style="background:#22c55e;color:#fff;border-radius:5px;width:24px;height:24px;display:flex;align-items:center;justify-content:center;font-size:12px;border:2px solid #fff;box-shadow:0 0 8px rgba(34,197,94,0.5);transform:rotate(45deg);"><span style="transform:rotate(-45deg);display:block;font-size:11px;">🏧</span></div>`,
+        iconSize:[24,24], iconAnchor:[12,12], className:''
+      });
+      return L.marker(p.latlng, {icon}).addTo(maps.result).bindPopup(`<b>${p.name}</b><br>${p.route}<br>Tarif : ${p.tarif}`);
+    });
+  }
   L.circleMarker(from,{radius:10,color:'#fff',fillColor:'#fff',fillOpacity:1,weight:3,className:''}).addTo(maps.result);
   L.circleMarker(to,  {radius:10,color:'#fff',fillColor:'#D0021B',fillOpacity:1,weight:3}).addTo(maps.result);
 
@@ -1798,11 +2349,20 @@ async function initNavMap() {
   showStep(0);
 
   clearInterval(navSimInterval);
+  // Reroute simulation: trigger a fake traffic jam between 30-50% progress
+  let rerouteTriggered = false;
   navSimInterval = setInterval(()=>{
     navPolyIdx = Math.min(navPolyIdx+1, coords.length-1);
     navMarker.setLatLng(coords[navPolyIdx]);
     maps.nav.panTo(coords[navPolyIdx], {animate:true, duration:1.0});
     const progress = navPolyIdx/(coords.length-1);
+
+    // Auto-detect "traffic" between 35% and 50% of route
+    if (!rerouteTriggered && progress >= 0.35 && progress < 0.50) {
+      rerouteTriggered = true;
+      triggerReroute(coords, navPolyIdx, to);
+    }
+
     const exp = Math.floor(progress*navSteps.length);
     if(exp>navStepIdx&&exp<navSteps.length) showStep(exp);
     if(navPolyIdx>=coords.length-1){ clearInterval(navSimInterval); showStep(navSteps.length-1); setTimeout(()=>showToast('Vous êtes arrivé ! 🏁','✅'),1000); }
@@ -1835,6 +2395,173 @@ function switchMinTab(tab) {
   document.getElementById('mpanel-' + tab).classList.add('active');
   if (tab === 'zones') { setTimeout(() => { if(maps.perturb) maps.perturb.invalidateSize(); else initPerturbMap(); }, 80); }
   if (tab === 'alerts') renderAlertsList();
+  if (tab === 'stats') { updateDashTime(); renderLights(); }
+}
+
+// ── DASHBOARD CLOCK ──
+function updateDashTime() {
+  const el = document.getElementById('dashTime');
+  if (!el) return;
+  const n = new Date();
+  el.textContent = n.toLocaleTimeString('fr-FR', {hour:'2-digit', minute:'2-digit', second:'2-digit'});
+}
+setInterval(updateDashTime, 1000);
+
+// ── VEHICLE COUNTER SIMULATION ──
+const VEH_BASES = { moto: 8420, car: 98600, bus: 3180, truck: 2140 };
+function simulateVehicles() {
+  const el = document.getElementById('cntVeh');
+  if (!el) return;
+  const moto  = VEH_BASES.moto  + Math.floor((Math.random()-.5)*200);
+  const car   = VEH_BASES.car   + Math.floor((Math.random()-.5)*1200);
+  const bus   = VEH_BASES.bus   + Math.floor((Math.random()-.5)*80);
+  const truck = VEH_BASES.truck + Math.floor((Math.random()-.5)*60);
+  const total = moto + car + bus + truck;
+  el.textContent = total.toLocaleString('fr-FR');
+  const vm = document.getElementById('vcMoto');  if(vm)  vm.textContent = moto.toLocaleString('fr-FR');
+  const vc = document.getElementById('vcCar');   if(vc)  vc.textContent = car.toLocaleString('fr-FR');
+  const vb = document.getElementById('vcBus');   if(vb)  vb.textContent = bus.toLocaleString('fr-FR');
+  const vt = document.getElementById('vcTruck'); if(vt)  vt.textContent = truck.toLocaleString('fr-FR');
+  // Update gabarit counters too
+  const gm = document.getElementById('gbMoto');  if(gm)  gm.textContent = moto.toLocaleString('fr-FR');
+  const gc = document.getElementById('gbCar');   if(gc)  gc.textContent = car.toLocaleString('fr-FR');
+  const gb = document.getElementById('gbBus');   if(gb)  gb.textContent = bus.toLocaleString('fr-FR');
+  const gt = document.getElementById('gbTruck'); if(gt)  gt.textContent = truck.toLocaleString('fr-FR');
+}
+setInterval(simulateVehicles, 4000);
+
+// ── TRAFFIC SIM PAUSE / RESUME ──
+let simPaused = false;
+function toggleTrafficSim() {
+  simPaused = !simPaused;
+  const btn = document.getElementById('simToggleBtn');
+  const vehs = document.querySelectorAll('.veh:not(.veh-stuck)');
+  vehs.forEach(v => {
+    v.style.animationPlayState = simPaused ? 'paused' : 'running';
+  });
+  if (btn) btn.textContent = simPaused ? '▶ Reprendre' : '⏸ Pause';
+}
+
+// ── TRAFFIC LIGHTS SIMULATION ──
+const LIGHTS_DATA = [
+  { name:'Carrefour Sandaga', loc:'Plateau', status: null },
+  { name:'Feux Av. Bourguiba × UCAD', loc:'Fann', status: null },
+  { name:'Carrefour VDN × Liberté 6', loc:'Grand Dakar', status: null },
+  { name:'Feux Hann Bel Air', loc:'Hann', status: null },
+];
+const LIGHT_STATES = [
+  { label:'🟢 Opérationnel', color:'#22c55e', bg:'rgba(34,197,94,0.08)' },
+  { label:'🟡 Clignotant', color:'#F59E0B', bg:'rgba(245,158,11,0.08)' },
+  { label:'🔴 En panne', color:'#D0021B', bg:'rgba(208,2,27,0.08)' },
+];
+function renderLights() {
+  const el = document.getElementById('lightsGrid');
+  if (!el) return;
+  el.innerHTML = LIGHTS_DATA.map((l, i) => {
+    if (l.status === null) l.status = Math.random() < 0.6 ? 0 : Math.random() < 0.7 ? 1 : 2;
+    const s = LIGHT_STATES[l.status];
+    return `<div style="display:flex;align-items:center;gap:8px;background:${s.bg};border:1px solid ${s.color}33;border-radius:8px;padding:7px 10px;">
+      <div style="width:9px;height:9px;border-radius:50%;background:${s.color};box-shadow:0 0 6px ${s.color}99;${l.status===1?'animation:blink 0.8s infinite;':''}flex-shrink:0;"></div>
+      <div style="flex:1;"><div style="font-size:11px;font-weight:600;color:#ccc;">${l.name}</div><div style="font-size:9px;color:#555;">${l.loc}</div></div>
+      <div style="font-size:10px;font-weight:700;color:${s.color};">${s.label.split(' ')[1]}</div>
+    </div>`;
+  }).join('');
+}
+function refreshLights() {
+  LIGHTS_DATA.forEach(l => l.status = null);
+  renderLights();
+  showToast('Feux mis à jour ✅', '🚦');
+}
+
+// ── ENCERCLEMENT DE QUARTIER ──
+let encircleLayerGroup = null;
+function doEncircle() {
+  const sel = document.getElementById('encircleZone');
+  const radiusInput = document.getElementById('encircleRadius');
+  if (!sel.value) { showToast('Sélectionnez un quartier à encercler', '⚠️'); return; }
+  const parts = sel.value.split('|');
+  const name = parts[0];
+  const lat = parseFloat(parts[1]);
+  const lon = parseFloat(parts[2]);
+  const radius = parseInt(radiusInput.value) || 500;
+  const cfg = ZONE_TYPE_COLORS[currentZoneType] || ZONE_TYPE_COLORS.travaux;
+
+  if (!maps.perturb) initPerturbMap([lat, lon], 14);
+
+  if (encircleLayerGroup) { encircleLayerGroup.clearLayers(); }
+  else encircleLayerGroup = L.layerGroup().addTo(maps.perturb);
+
+  // Outer dashed pulse
+  L.circle([lat, lon], {
+    radius: radius * 1.12, color: cfg.fill, fillColor: 'transparent',
+    weight: 2, opacity: 0.4, dashArray: '8 5', className: 'pulse-circle'
+  }).addTo(encircleLayerGroup);
+
+  // Main fill circle
+  L.circle([lat, lon], {
+    radius, color: cfg.fill, fillColor: cfg.fill,
+    weight: 3, opacity: 0.9, fillOpacity: 0.10
+  }).addTo(encircleLayerGroup);
+
+  // Label marker
+  const zoneName = sel.options[sel.selectedIndex].text.replace(/^[^\s]+\s/,'');
+  const labelIcon = L.divIcon({
+    html: `<div style="background:rgba(6,13,26,0.92);color:${cfg.fill};border:1.5px solid ${cfg.fill};border-radius:8px;padding:4px 9px;font-size:10px;font-weight:800;white-space:nowrap;box-shadow:0 2px 10px rgba(0,0,0,.6);">${cfg.icon} ${cfg.label} — ${zoneName} · ${radius}m</div>`,
+    iconAnchor: [0, 28], className: ''
+  });
+  L.marker([lat, lon], {icon: labelIcon}).addTo(encircleLayerGroup);
+
+  maps.perturb.setView([lat, lon], 14, {animate: true});
+  document.getElementById('zoneLabel').textContent = `${cfg.icon} ${cfg.label} : ${zoneName} (rayon ${radius}m)`;
+  showToast(`${cfg.icon} Zone encerclée : ${zoneName} · ${radius}m`, '🗺️');
+}
+function clearEncircles() {
+  if (encircleLayerGroup) { encircleLayerGroup.clearLayers(); }
+  document.getElementById('zoneLabel').textContent = '📍 Tout Dakar — 14 incidents';
+  showToast('Zones effacées', '✕');
+}
+
+// ── EXPORT RAPPORT ──
+function exportRapport() {
+  const now = new Date();
+  const dateStr = now.toLocaleDateString('fr-FR', {weekday:'long', year:'numeric', month:'long', day:'numeric'});
+  showToast('📄 Génération du rapport PDF…', '🇸🇳');
+  setTimeout(() => {
+    const content = `MINISTÈRE DES TRANSPORTS DU SÉNÉGAL
+Rapport de trafic — SUNUYOON
+${dateStr} · ${now.toLocaleTimeString('fr-FR')}
+
+═══════════════════════════════════
+TABLEAU DE BORD — RÉSUMÉ
+═══════════════════════════════════
+🚨 Incidents urgents    : 4
+🏗️ Travaux en cours     : 7
+✅ Incidents résolus    : 23
+🔴 Zones encerclées     : 5
+
+ÉTAT DU TRAFIC
+• VDN                   : Fluide
+• Av. Bourguiba         : Dense (+8 min)
+• Autoroute AIBD        : Saturé (+35 min)
+• Corniche Ouest        : Fluide
+
+INCIDENTS ACTIFS
+1. Accident Autoroute AIBD (PK22) — URGENTE
+2. Travaux Av. Cheikh Anta Diop — En cours
+3. Inondation Yeumbeul Nord — URGENTE
+4. Contrôle police VDN — Info
+5. Fermeture Pont de Hann — Attention
+
+Document généré par SUNUYOON v1.0
+Ministère des Transports · Sénégal`;
+
+    const blob = new Blob([content], {type:'text/plain;charset=utf-8'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = 'rapport-trafic-dakar-' + now.toISOString().slice(0,10) + '.txt';
+    a.click(); URL.revokeObjectURL(url);
+    showToast('✅ Rapport exporté !', '📄');
+  }, 1200);
 }
 
 // ══ ZONE SELECTION ══
@@ -1867,6 +2594,53 @@ function selectZone(key, center, zoom) {
   else initPerturbMap(center, zoom);
 }
 
+// ══ ZONE TYPE SELECTOR ══
+let currentZoneType = 'travaux';
+const ZONE_TYPE_COLORS = {
+  travaux:  { fill:'#D0021B', label:'Travaux', icon:'🏗️' },
+  fermeture:{ fill:'#F59E0B', label:'Fermeture', icon:'🚫' },
+  danger:   { fill:'#EF4444', label:'Danger', icon:'⚠️' },
+  info:     { fill:'#3B82F6', label:'Info', icon:'ℹ️' },
+};
+function setZoneType(t) {
+  currentZoneType = t;
+  ['travaux','fermeture','danger','info'].forEach(k => {
+    const el = document.getElementById('zt-'+k);
+    if (!el) return;
+    const isOn = (k === t);
+    const cfg = ZONE_TYPE_COLORS[k];
+    el.style.background = isOn ? `rgba(208,2,27,0.15)` : 'transparent';
+    el.style.borderColor = isOn ? `rgba(208,2,27,0.5)` : 'rgba(255,255,255,0.08)';
+    el.style.color = isOn ? '#ff5f6d' : '#555';
+  });
+}
+
+// ══ DELETE CHANTIER ══
+let chantierCount = 4;
+function deleteChantier(id) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.style.transition = 'opacity .3s, transform .3s';
+  el.style.opacity = '0'; el.style.transform = 'translateX(20px)';
+  setTimeout(() => { el.remove(); updateChantierCount(); }, 300);
+}
+function updateChantierCount() {
+  const list = document.getElementById('sigHistory');
+  if (!list) return;
+  const n = list.querySelectorAll('.chantier-card').length;
+  const el = document.getElementById('chantierCount');
+  if (el) el.textContent = n + (n > 1 ? ' en cours' : ' en cours');
+}
+
+// ══ CLEAR FORM ══
+function clearSigForm() {
+  ['sigType','sigRoute','sigLoc','sigDateStart','sigDateEnd','sigVoies','sigDeviation','sigDesc'].forEach(id => {
+    const el = document.getElementById(id); if (el) el.value = '';
+  });
+  const src = document.getElementById('sigSource'); if (src) src.value = '';
+  setGrav('info');
+}
+
 // ══ MINISTRY FORM ══
 let currentGrav = 'info';
 function setGrav(g) {
@@ -1875,41 +2649,82 @@ function setGrav(g) {
   document.getElementById('grav-' + g).classList.add('active');
 }
 function submitSignalement() {
-  const type = document.getElementById('sigType').value;
-  const loc  = document.getElementById('sigLoc').value;
-  const ds   = document.getElementById('sigDateStart').value;
-  const de   = document.getElementById('sigDateEnd').value;
-  const desc = document.getElementById('sigDesc').value;
-  const src  = document.getElementById('sigSource').value;
+  const type  = document.getElementById('sigType').value;
+  const route = document.getElementById('sigRoute') ? document.getElementById('sigRoute').value : '';
+  const loc   = document.getElementById('sigLoc').value;
+  const ds    = document.getElementById('sigDateStart').value;
+  const de    = document.getElementById('sigDateEnd').value;
+  const desc  = document.getElementById('sigDesc').value;
+  const src   = document.getElementById('sigSource') ? document.getElementById('sigSource').value : '';
+  const dev   = document.getElementById('sigDeviation') ? document.getElementById('sigDeviation').value : '';
+  const voies = document.getElementById('sigVoies') ? document.getElementById('sigVoies').value : '';
+
   if (!type || !loc || !ds) { showToast('Remplissez les champs obligatoires *','⚠️'); return; }
-  const icon = type.charAt(0);
-  const title = type + ' — ' + loc;
-  const dateStr = ds + (de ? ' → ' + de : '');
-  const statusClass = currentGrav === 'urg' ? 'urg' : currentGrav === 'warn' ? 'warn' : 'ok';
-  const statusTxt = currentGrav === 'urg' ? '🚨 Urgente' : currentGrav === 'warn' ? '⚠️ En cours' : 'ℹ️ Info';
-  const dotColor = currentGrav === 'urg' ? '#D0021B' : currentGrav === 'warn' ? '#F59E0B' : '#22c55e';
-  const newItem = document.createElement('div');
-  newItem.className = 'sig-item';
-  newItem.innerHTML = `<div class="sig-dot" style="background:${dotColor};"></div><div class="sig-body"><div class="sig-title">${type} — ${loc}</div><div class="sig-meta">${dateStr}${src ? ' · ' + src : ''}</div><div class="sig-status ${statusClass}">${statusTxt}</div></div>`;
-  document.getElementById('sigHistory').prepend(newItem);
-  // Clear form
-  document.getElementById('sigType').value = '';
-  document.getElementById('sigLoc').value = '';
-  document.getElementById('sigDateStart').value = '';
-  document.getElementById('sigDateEnd').value = '';
-  document.getElementById('sigDesc').value = '';
-  document.getElementById('sigSource').value = '';
-  // Update KPI
-  const ku = document.getElementById('kpiWork');
-  ku.textContent = parseInt(ku.textContent) + 1;
-  // Add to map
+
+  const fmtDate = v => { if(!v) return ''; try { return new Date(v+'T12:00:00').toLocaleDateString('fr-FR', {day:'numeric', month:'short', year:'numeric'}); } catch(e){ return v; } };
+  const dateStr = fmtDate(ds) + (de ? ' → ' + fmtDate(de) : '');
+
+  const dotColor     = currentGrav === 'urg' ? '#D0021B' : currentGrav === 'warn' ? '#F59E0B' : '#22c55e';
+  const impactLabel  = currentGrav === 'urg' ? '🔴 Sévère' : currentGrav === 'warn' ? '🟡 Modéré' : '🟢 Minimal';
+  const statusClass  = currentGrav === 'urg' ? 'ch-urg' : currentGrav === 'warn' ? 'ch-warn' : 'ch-info';
+  const isPlanned    = new Date(ds+'T00:00:00') > new Date();
+
+  // Build chantier card
+  chantierCount++;
+  const chId = 'ch' + chantierCount;
+  const emoji = type.charAt(0) + type.charAt(1);
+  const newCard = document.createElement('div');
+  newCard.className = 'chantier-card'; newCard.id = chId;
+  newCard.style.opacity = '0'; newCard.style.transform = 'translateY(-8px)';
+  newCard.innerHTML = `
+    <div style="display:flex;align-items:flex-start;gap:9px;">
+      <div style="width:34px;height:34px;background:rgba(208,2,27,0.1);border:1px solid rgba(208,2,27,0.25);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;">${emoji}</div>
+      <div style="flex:1;min-width:0;">
+        <div style="font-size:11px;font-weight:700;color:#fff;">${type}${route ? ' — ' + route : ''}</div>
+        <div style="font-size:9px;color:#555;margin-top:1px;">${loc}${src ? ' · ' + src : ''}</div>
+        <div style="margin-top:4px;"><span style="font-size:9px;color:#F59E0B;font-weight:600;">📅 ${dateStr}</span></div>
+        <div style="display:flex;align-items:center;gap:4px;margin-top:4px;flex-wrap:wrap;">
+          <span class="ch-badge ${statusClass}">${impactLabel}</span>
+          <span class="ch-badge ${isPlanned ? 'ch-status-planned' : 'ch-status-on'}">${isPlanned ? '⏳ Planifié' : '● En cours'}</span>
+          ${voies ? `<span class="ch-badge ch-status-done">${voies}</span>` : ''}
+        </div>
+        ${dev ? `<div style="font-size:9px;color:#3a5a7a;margin-top:3px;">↩ Déviation : ${dev}</div>` : ''}
+      </div>
+      <button onclick="deleteChantier('${chId}')" style="background:rgba(208,2,27,0.1);border:1px solid rgba(208,2,27,0.2);border-radius:6px;padding:4px 7px;font-size:10px;color:#ff5f6d;cursor:pointer;font-family:inherit;flex-shrink:0;">✕</button>
+    </div>`;
+
+  const list = document.getElementById('sigHistory');
+  if (list) { list.prepend(newCard); setTimeout(() => { newCard.style.transition='opacity .3s,transform .3s'; newCard.style.opacity='1'; newCard.style.transform='none'; }, 30); }
+  updateChantierCount();
+
+  // Update KPIs
+  const ku = document.getElementById('kpiWork'); if (ku) ku.textContent = parseInt(ku.textContent) + 1;
+  if (currentGrav === 'urg') { const ke = document.getElementById('kpiUrgent'); if(ke) ke.textContent = parseInt(ke.textContent)+1; }
+
+  // Add to ALL_ALERTS
+  ALL_ALERTS.unshift({
+    icon: emoji, cls: currentGrav==='urg'?'urgent':currentGrav==='warn'?'warning':'',
+    badge: currentGrav==='urg'?'URGENTE':'TRAVAUX',
+    type: 'travaux', title: type + (route?' — '+route:''), loc, desc: desc||'Déclaration officielle Ministère des Transports.',
+    delay: currentGrav==='urg'?'+35 min':'+8 min', time: 'À l\'instant', src: src||'Ministère',
+    dateStr
+  });
+
+  // Add to perturb map
   if (maps.perturb) {
-    const col = dotColor;
-    const mk = L.divIcon({ html:`<div style="background:${col};color:white;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:13px;border:2px solid white;">${icon}</div>`, iconSize:[26,26], iconAnchor:[13,13], className:'' });
-    L.marker(DAKAR, {icon:mk}).addTo(maps.perturb).bindPopup(type + ' — ' + loc);
+    const mk = L.divIcon({ html:`<div style="background:${dotColor};color:white;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:12px;border:2px solid white;box-shadow:0 2px 8px rgba(0,0,0,.5);">${emoji}</div>`, iconSize:[26,26], iconAnchor:[13,13], className:'' });
+    L.marker(DAKAR, {icon:mk}).addTo(maps.perturb).bindPopup(`<b>${type}</b><br>${loc}<br>${dateStr}`);
   }
-  showToast('✅ Signalement soumis au Ministère !', '🇸🇳');
-  switchMinTab('stats');
+
+  const ref = 'DKR-' + Math.floor(Math.random()*90000+10000);
+  showToast(`✅ Déclaration #${ref} publiée !`, '🇸🇳');
+  setTimeout(() => showToast(`📢 Usagers notifiés sur cet axe · Réf. ${ref}`, '📨'), 1600);
+
+  clearSigForm();
+  // Offer to encircle if travaux
+  if (type.includes('Travaux') || type.includes('barrée') || type.includes('Fermeture')) {
+    setTimeout(() => { switchMinTab('zones'); showToast('💡 Encerclez maintenant la zone sur la carte', '🗺️'); }, 2200);
+  }
 }
 
 // ══ ALERTS LIST ══
@@ -1951,6 +2766,8 @@ function initPerturbMap(center, zoom) {
     });
     L.marker(inc.latlng, {icon}).addTo(maps.perturb).bindPopup(inc.label);
   });
+  // Initialize encircle layer group on top
+  encircleLayerGroup = L.layerGroup().addTo(maps.perturb);
 }
 
 // ══ VOICE NAVIGATION ENGINE ══
@@ -2173,16 +2990,56 @@ async function searchRoute() {
   goTo('s-result');
 }
 
+// ── PÉAGES DAKAR ──
+const TOLL_POINTS = [
+  { name:'Péage Malick Sy',      latlng:[14.6876,-17.4481], route:'Autoroute Urbaine', tarif:'200–500F' },
+  { name:'Péage Pikine',         latlng:[14.7465,-17.4020], route:'VDN / Autoroute AIBD', tarif:'300–700F' },
+  { name:'Péage Keur Massar',    latlng:[14.7820,-17.3690], route:'Autoroute AIBD', tarif:'500F' },
+  { name:'Péage Rufisque',       latlng:[14.7157,-17.2744], route:'Autoroute AIBD', tarif:'700F' },
+  { name:'Péage Patte d\'Oie',   latlng:[14.7232,-17.4520], route:'VDN', tarif:'200F' },
+];
+
+function addTollMarkers(map) {
+  if (!window.tollLayerGroup) window.tollLayerGroup = L.layerGroup();
+  window.tollLayerGroup.clearLayers();
+  window.tollLayerGroup.addTo(map);
+
+  TOLL_POINTS.forEach(p => {
+    // Toll symbol marker: green diamond with 💳
+    const icon = L.divIcon({
+      html: `<div style="background:#22c55e;color:#fff;border-radius:6px;width:28px;height:28px;display:flex;align-items:center;justify-content:center;font-size:14px;border:2.5px solid #fff;box-shadow:0 0 10px rgba(34,197,94,0.6),0 2px 6px rgba(0,0,0,0.5);font-weight:900;transform:rotate(45deg);"><span style="transform:rotate(-45deg);display:block;">🏧</span></div>`,
+      iconSize:[28,28], iconAnchor:[14,14], className:''
+    });
+    const marker = L.marker(p.latlng, {icon}).addTo(window.tollLayerGroup);
+
+    // Label tooltip
+    const labelIcon = L.divIcon({
+      html: `<div style="background:rgba(6,20,10,0.95);color:#22c55e;border:1.5px solid rgba(34,197,94,0.5);border-radius:8px;padding:3px 8px;font-size:9px;font-weight:800;white-space:nowrap;box-shadow:0 2px 8px rgba(0,0,0,0.6);margin-top:4px;">${p.name}<br><span style="color:#555;font-weight:500;">${p.route} · ${p.tarif}</span></div>`,
+      iconAnchor:[-2, -16], className:''
+    });
+    L.marker(p.latlng, {icon: labelIcon, interactive:false}).addTo(window.tollLayerGroup);
+  });
+}
+
 function initPlanMap() {
   if (maps.plan) { setTimeout(() => maps.plan.invalidateSize(), 100); return; }
   maps.plan = L.map('planMap', { zoomControl:false, attributionControl:false, dragging:true, scrollWheelZoom:false, doubleClickZoom:false, touchZoom:true }).setView(DAKAR, 13);
   darkTile().addTo(maps.plan);
   satLabelsTile().addTo(maps.plan);
+
+  // Draw the toll highway as a highlighted corridor (VDN + Autoroute AIBD)
+  const vdnLine = [[14.6876,-17.4481],[14.7232,-17.4520],[14.7465,-17.4020],[14.7820,-17.3690],[14.7157,-17.2744]];
+  L.polyline(vdnLine, {color:'#22c55e', weight:10, opacity:0.10, lineCap:'round', lineJoin:'round'}).addTo(maps.plan);
+  L.polyline(vdnLine, {color:'#22c55e', weight:3,  opacity:0.55, lineCap:'round', lineJoin:'round', dashArray:'12 6'}).addTo(maps.plan);
+
   // Ajouter incidents
   INCIDENTS.forEach(inc => {
     const icon = L.divIcon({ html:`<div style="background:${inc.color};color:white;border-radius:50%;width:22px;height:22px;display:flex;align-items:center;justify-content:center;font-size:11px;border:2px solid white;">${inc.emoji}</div>`, iconSize:[22,22], iconAnchor:[11,11], className:'' });
     L.marker(inc.latlng, {icon}).addTo(maps.plan);
   });
+
+  // Toll markers — on by default (mode péage est par défaut)
+  addTollMarkers(maps.plan);
 }
 
 function goTo(id) {
@@ -2198,7 +3055,7 @@ function goTo(id) {
     if(id==='s-plan') initPlanMap();
     if(id==='s-result') initResultMap();
     if(id==='s-nav') initNavMap();
-    if(id==='s-perturbations') { switchMinTab('stats'); renderAlertsList(); }
+    if(id==='s-perturbations') { switchMinTab('stats'); renderAlertsList(); updateDashTime(); renderLights(); }
   },100);
 }
 
@@ -2241,23 +3098,43 @@ function addStop(){stopCount++;const box=document.getElementById('stopsBox');con
 function setDest(dest){document.getElementById('destInp').value=dest;toCoords=null;showToast('Destination : '+dest.split(',')[0],'📍');}
 function clearDest(){document.getElementById('destInp').value='';toCoords=null;}
 function selectMode(el, mode) {
-  document.querySelectorAll('.opt-tab').forEach(t => {
-    t.classList.remove('sel');
-    t.style.borderColor = '';
-    t.style.background = '';
-    const lbl = t.querySelector('.opt-tab-label');
-    if (lbl) { lbl.style.color = ''; }
+  // Reset both tabs
+  ['peage','sans'].forEach(m => {
+    const t = document.getElementById('tab-' + m);
+    if (!t) return;
+    if (m === 'peage') {
+      t.style.background = 'transparent';
+      t.style.borderColor = 'var(--blk3)';
+      t.querySelector('div:nth-child(2)').style.color = 'var(--gray3)';
+      t.querySelector('div:nth-child(3)').style.color = 'var(--gray)';
+    } else {
+      t.style.background = 'transparent';
+      t.style.borderColor = 'var(--blk3)';
+      t.querySelector('div:nth-child(2)').style.color = 'var(--gray3)';
+    }
   });
-  el.classList.add('sel');
+  // Activate selected
   if (mode === 'peage') {
+    el.style.background = 'rgba(34,197,94,0.10)';
     el.style.borderColor = '#22c55e';
-    el.style.background = 'rgba(34,197,94,0.06)';
-    const lbl = el.querySelector('.opt-tab-label');
-    if (lbl) lbl.style.color = '#22c55e';
-    showToast('⚡ Mode : Autoroute avec péage (le plus rapide)', '✅');
+    el.querySelector('div:nth-child(2)').style.color = '#22c55e';
+    el.querySelector('div:nth-child(3)').style.color = '#3a6a3a';
+    const bar = document.getElementById('peageInfoBar');
+    if (bar) bar.style.display = 'flex';
+    // Show toll markers on map
+    if (maps.plan) addTollMarkers(maps.plan);
+    showToast('⚡ Autoroute avec péage — VDN · AIBD · Péage Malick Sy', '✅');
   } else {
-    showToast('🛣️ Mode : Sans péage — routes nationales', '✅');
+    el.style.background = 'rgba(255,255,255,0.04)';
+    el.style.borderColor = 'var(--blk4)';
+    el.querySelector('div:nth-child(2)').style.color = '#ddd';
+    const bar = document.getElementById('peageInfoBar');
+    if (bar) bar.style.display = 'none';
+    // Remove toll markers
+    if (maps.plan && window.tollLayerGroup) window.tollLayerGroup.clearLayers();
+    showToast('🛣️ Routes nationales — Sans péage', '✅');
   }
+  window.currentMode = mode;
 }
 function locateMe(){if(navigator.geolocation){navigator.geolocation.getCurrentPosition(p=>{fromCoords=[p.coords.latitude,p.coords.longitude];document.getElementById('depInp').value='Ma position GPS';showToast('Position GPS détectée','📍');},()=>showToast('GPS non disponible','⚠️'));}else{showToast('GPS non supporté','⚠️');}}
 
@@ -2291,6 +3168,157 @@ function filterPerturb(el, fromMin) {
     if (show) n++;
   });
   showToast(type === 'all' ? `Tout — ${n} signalements` : `${el.textContent.trim()} — ${n} résultat${n>1?'s':''}`, '🔍');
+}
+
+// ══ REROUTING ENGINE ══
+let rerouteActive = false;
+let navCurrentCoords = null;
+
+async function triggerReroute(originalCoords, currentIdx, to) {
+  if (rerouteActive) return;
+  rerouteActive = true;
+  const banner = document.getElementById('rerouteBanner');
+  document.getElementById('rerouteTitle').textContent = '🚨 Embouteillage détecté !';
+  document.getElementById('rerouteMsg').textContent = 'Recalcul de l\'itinéraire en cours…';
+  document.getElementById('rerouteSpinner').style.display = 'block';
+  banner.classList.add('show');
+  speak('Attention ! Embouteillage détecté. Recalcul de l\'itinéraire.');
+
+  // Current position = last known position
+  const currentPos = originalCoords[currentIdx] || originalCoords[0];
+
+  // Try to fetch an alternative via OSRM (with a waypoint offset to force different road)
+  try {
+    const wpt = [currentPos[0] + 0.008, currentPos[1] + 0.006]; // slight deviation
+    const url = `https://router.project-osrm.org/route/v1/driving/${currentPos[1]},${currentPos[0]};${wpt[1]},${wpt[0]};${to[1]},${to[0]}?overview=full&geometries=polyline&steps=true`;
+    const r = await fetch(url);
+    const d = await r.json();
+    if (d.code === 'Ok' && d.routes[0]) {
+      const newCoords = decodePolyline(d.routes[0].geometry);
+      applyReroute(newCoords, to, d.routes[0].duration, d.routes[0].distance);
+      return;
+    }
+  } catch(e) {}
+
+  // Fallback: build synthetic alternative
+  const alt = buildAltRoute(originalCoords, currentIdx, to);
+  applyReroute(alt, to, null, null);
+}
+
+function buildAltRoute(coords, fromIdx, to) {
+  // Take current position, add a slight detour, end at destination
+  const pos = coords[fromIdx];
+  const mid1 = [pos[0] + 0.010, pos[1] - 0.005];
+  const mid2 = [pos[0] + 0.015, pos[1] + 0.008];
+  const tail = coords.slice(Math.min(fromIdx + Math.floor((coords.length - fromIdx) * 0.6), coords.length - 1));
+  return [pos, mid1, mid2, ...tail, to];
+}
+
+function applyReroute(newCoords, to, durSec, distM) {
+  // Draw new route on nav map
+  if (maps.nav) {
+    maps.nav.eachLayer(l => { if (l instanceof L.Polyline) maps.nav.removeLayer(l); });
+    L.polyline(newCoords, {color:'#22c55e', weight:20, opacity:0.18}).addTo(maps.nav);
+    L.polyline(newCoords, {color:'#22c55e', weight:7, opacity:1, lineCap:'round', lineJoin:'round'}).addTo(maps.nav);
+  }
+  navCurrentCoords = newCoords;
+
+  const durTxt = durSec ? Math.round(durSec/60)+' min' : 'recalculé';
+  const distTxt = distM ? (distM/1000).toFixed(1)+' km' : '—';
+  document.getElementById('navDuration').textContent = durTxt;
+  document.getElementById('navDist').textContent = distTxt;
+
+  setTimeout(() => {
+    document.getElementById('rerouteSpinner').style.display = 'none';
+    document.getElementById('rerouteTitle').textContent = '✅ Nouvel itinéraire trouvé';
+    document.getElementById('rerouteMsg').textContent = `Route alternative · ${durTxt} · ${distTxt}`;
+    speak('Nouvel itinéraire trouvé. Suivez la route verte.');
+    showToast('✅ Itinéraire recalculé — route alternative', '🔄');
+    setTimeout(() => dismissReroute(), 3500);
+  }, 1800);
+}
+
+function dismissReroute() {
+  document.getElementById('rerouteBanner').classList.remove('show');
+  setTimeout(() => { rerouteActive = false; }, 500);
+}
+
+// Polyline decoder (Google encoded polyline)
+function decodePolyline(str) {
+  let index = 0, lat = 0, lng = 0, result = [];
+  while (index < str.length) {
+    let b, shift = 0, result2 = 0;
+    do { b = str.charCodeAt(index++) - 63; result2 |= (b & 0x1f) << shift; shift += 5; } while (b >= 0x20);
+    lat += (result2 & 1) ? ~(result2 >> 1) : (result2 >> 1);
+    shift = 0; result2 = 0;
+    do { b = str.charCodeAt(index++) - 63; result2 |= (b & 0x1f) << shift; shift += 5; } while (b >= 0x20);
+    lng += (result2 & 1) ? ~(result2 >> 1) : (result2 >> 1);
+    result.push([lat / 1e5, lng / 1e5]);
+  }
+  return result;
+}
+
+// ══ E-WALLET & VOUCHERS ══
+let walletBalance = 6200;
+let walletPts = 1240;
+let voucherCount = 2;
+
+function linkWallet(provider) {
+  showToast(`${provider} — Connexion en cours…`, '🔗');
+  setTimeout(() => {
+    const idMap = {'Wave':'waveStatus', 'Orange Money':'omStatus', 'Free Money':'fmStatus'};
+    const el = document.getElementById(idMap[provider]);
+    if (el) { el.textContent = 'Connecté ✓'; el.style.color = '#22c55e'; }
+    showToast(`${provider} connecté ! Vos bons seront transférés automatiquement.`, '✅');
+  }, 1400);
+}
+
+function copyVoucher(id, code) {
+  if (navigator.clipboard) {
+    navigator.clipboard.writeText(code).then(() => showToast('Code copié : ' + code, '📋')).catch(() => fallbackCopy(code));
+  } else { fallbackCopy(code); }
+}
+function fallbackCopy(text) {
+  const el = document.createElement('textarea');
+  el.value = text; document.body.appendChild(el); el.select();
+  try { document.execCommand('copy'); showToast('Code copié : ' + text, '📋'); } catch(e) {}
+  document.body.removeChild(el);
+}
+
+function claimReward(name, pts, icon='🎁') {
+  if (walletPts < pts) { showToast('Points insuffisants (' + walletPts + ' pts)', '⚠️'); return; }
+  walletPts -= pts;
+  walletBalance += pts * 5; // 1 pt ≈ 5 F CFA
+  document.getElementById('drvPoints').textContent = walletPts.toLocaleString('fr-FR');
+  document.getElementById('walletBalance').innerHTML = walletBalance.toLocaleString('fr-FR') + ' <span style="font-size:14px;font-weight:600;">F CFA</span>';
+  document.getElementById('walletPtsVal').textContent = '≈ ' + walletPts + ' pts';
+
+  // Generate new voucher
+  voucherCount++;
+  const code = 'SY-' + Math.random().toString(36).substring(2,6).toUpperCase() + '-2025';
+  const vId = 'v' + voucherCount;
+  const vCard = document.createElement('div');
+  vCard.className = 'voucher-card';
+  vCard.id = vId;
+  vCard.innerHTML = `
+    <div style="display:flex;align-items:center;gap:10px;">
+      <div style="font-size:22px;">${icon}</div>
+      <div style="flex:1;">
+        <div style="font-size:12px;font-weight:700;color:#fff;">${name}</div>
+        <div style="font-size:10px;color:#555;">Bon généré · Valable 30 jours</div>
+      </div>
+      <div style="text-align:right;">
+        <div style="font-size:11px;font-weight:700;color:#22c55e;">Obtenu ✓</div>
+        <div style="font-size:9px;color:#3a5a3a;">${pts} pts</div>
+      </div>
+    </div>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-top:8px;padding-top:8px;border-top:1px solid #1a2e1a;">
+      <div style="font-family:monospace;font-size:13px;font-weight:700;color:#22c55e;letter-spacing:2px;">${code}</div>
+      <button onclick="copyVoucher('${vId}','${code}')" style="background:rgba(34,197,94,0.15);border:1px solid rgba(34,197,94,0.3);border-radius:8px;padding:5px 10px;font-size:10px;font-weight:700;color:#22c55e;cursor:pointer;font-family:inherit;">📋 Copier</button>
+    </div>`;
+  const list = document.getElementById('voucherList');
+  if (list) list.prepend(vCard);
+  showToast(`${icon} Bon obtenu ! Code : ${code}`, '✅');
 }
 
 // ══ THEME TOGGLE ══
