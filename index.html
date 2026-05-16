@@ -1237,49 +1237,85 @@ html, body {
 
   <!-- ══ CHAUFFEUR ══ -->
   <div id="s-driver" class="screen">
-    <div class="app-header">
+    <!-- HEADER AMÉLIORÉ -->
+    <div class="app-header" style="padding:10px 14px 10px;">
       <button onclick="goTo('s-plan')" class="back-btn"><svg width="11" height="11" viewBox="0 0 12 12" fill="none"><path d="M8 2L4 6L8 10" stroke="#CCC" stroke-width="1.5" stroke-linecap="round"/></svg>Retour</button>
-      <div class="h-logo">SUNU<em>YOON</em></div>
+      <div class="h-logo" style="flex:1;text-align:center;">SUNU<em>YOON</em></div>
       <div class="header-actions">
+        <!-- Bouton signalement rapide -->
+        <div onclick="openSignalModal()" style="display:flex;align-items:center;gap:4px;background:rgba(208,2,27,0.12);border:1px solid rgba(208,2,27,0.3);border-radius:9px;padding:5px 9px;cursor:pointer;">
+          <span style="font-size:12px;">⚠️</span>
+          <span style="font-size:10px;font-weight:700;color:#ff5f6d;">Signaler</span>
+        </div>
         <div class="icon-btn" onclick="showToast('Paramètres','⚙️')"><svg width="15" height="15" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="3" stroke="white" stroke-width="1.3"/><path d="M8 1v2M8 13v2M1 8h2M13 8h2M3.2 3.2l1.4 1.4M11.4 11.4l1.4 1.4M3.2 12.8l1.4-1.4M11.4 4.6l1.4-1.4" stroke="white" stroke-width="1.3" stroke-linecap="round"/></svg></div>
       </div>
     </div>
-    <!-- Barre de statut compacte (remplace la carte) -->
-    <div style="background:linear-gradient(135deg,rgba(34,197,94,0.08),rgba(34,197,94,0.04));border-bottom:1px solid rgba(34,197,94,0.15);padding:8px 14px;display:flex;align-items:center;gap:10px;flex-shrink:0;">
-      <div style="width:9px;height:9px;border-radius:50%;background:#22c55e;animation:blink 1.5s infinite;flex-shrink:0;"></div>
+
+    <!-- BARRE STATUT -->
+    <div style="background:linear-gradient(135deg,rgba(34,197,94,0.08),rgba(34,197,94,0.04));border-bottom:1px solid rgba(34,197,94,0.15);padding:7px 14px;display:flex;align-items:center;gap:10px;flex-shrink:0;">
+      <div style="width:8px;height:8px;border-radius:50%;background:#22c55e;animation:blink 1.5s infinite;flex-shrink:0;"></div>
       <div style="flex:1;"><span style="font-size:12px;font-weight:600;color:#22c55e;" id="statusText">En ligne</span><span style="font-size:11px;color:#555;margin-left:6px;" id="statusSub">· Disponible pour des courses</span></div>
       <div style="background:var(--blk3);border-radius:8px;padding:4px 10px;font-size:10px;color:#aaa;cursor:pointer;" id="statusPill" onclick="toggleStatus()">Changer</div>
       <div style="font-size:11px;color:#555;">📍 Plateau</div>
     </div>
+
     <div class="drv-body">
 
-      <!-- PROFIL SIMPLIFIÉ CHAUFFEUR -->
-      <div class="drv-profile" style="margin-bottom:10px;">
-        <div class="drv-top" style="align-items:center;">
-          <div class="avatar" style="width:48px;height:48px;font-size:18px;border:2px solid rgba(208,2,27,0.4);">MB</div>
-          <div style="flex:1;">
-            <div style="font-size:11px;color:#555;font-weight:600;text-transform:uppercase;letter-spacing:.4px;margin-bottom:3px;">Numéro chauffeur</div>
-            <div style="font-size:18px;font-weight:800;color:#fff;font-family:monospace;letter-spacing:1px;">+221 77 412 38 91</div>
+      <!-- ── CARTE PROFIL REPENSÉE ── -->
+      <div style="background:linear-gradient(135deg,#141414,#0f0f0f);border:1px solid #1e1e1e;border-radius:16px;padding:14px;margin-bottom:10px;">
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">
+          <!-- Avatar avec initiales + couleur niveau -->
+          <div style="position:relative;flex-shrink:0;">
+            <div style="width:54px;height:54px;border-radius:50%;background:linear-gradient(135deg,#D0021B,#8B0011);display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:800;color:#fff;border:2.5px solid rgba(208,2,27,0.5);box-shadow:0 0 16px rgba(208,2,27,0.25);">MB</div>
+            <div style="position:absolute;bottom:0;right:0;width:16px;height:16px;border-radius:50%;background:#22c55e;border:2px solid #0c0c0c;display:flex;align-items:center;justify-content:center;font-size:8px;">✓</div>
           </div>
-          <div class="d-badge" style="font-size:11px;">🥈 Argent</div>
+          <div style="flex:1;min-width:0;">
+            <div style="font-size:10px;color:#444;font-weight:600;text-transform:uppercase;letter-spacing:.4px;margin-bottom:2px;">Numéro chauffeur</div>
+            <div style="font-size:16px;font-weight:800;color:#fff;font-family:monospace;letter-spacing:.5px;">+221 77 412 38 91</div>
+            <div style="font-size:10px;color:#666;margin-top:2px;">Membre depuis mars 2024</div>
+          </div>
+          <div style="text-align:center;flex-shrink:0;">
+            <div style="font-size:20px;">🥈</div>
+            <div style="font-size:9px;font-weight:800;color:#aaa;letter-spacing:.3px;">ARGENT</div>
+          </div>
+        </div>
+
+        <!-- RÉSUMÉ DU JOUR — nouveau -->
+        <div style="background:rgba(208,2,27,0.06);border:1px solid rgba(208,2,27,0.15);border-radius:10px;padding:9px 12px;display:flex;align-items:center;gap:10px;">
+          <div style="font-size:18px;">📈</div>
+          <div style="flex:1;">
+            <div style="font-size:10px;color:#666;font-weight:600;text-transform:uppercase;letter-spacing:.4px;">Aujourd'hui</div>
+            <div style="font-size:12px;color:#fff;font-weight:700;margin-top:1px;">+65 pts gagnés · 2 signalements · 3 trajets</div>
+          </div>
+          <div style="font-size:18px;font-weight:800;color:#D0021B;font-family:monospace;">+65</div>
         </div>
       </div>
-      <div class="pts-hero">
-        <div class="pts-circle" style="--pct:210deg;">
-          <div class="pts-inner">
-            <div class="pts-val" id="drvPoints">1 240</div>
-            <div class="pts-lbl-sm">PTS</div>
+
+      <!-- ── PROGRESSION NIVEAU — barre compacte ── -->
+      <div style="background:linear-gradient(135deg,#141414,#0f0f0f);border:1px solid #1e1e1e;border-radius:14px;padding:12px 14px;margin-bottom:10px;">
+        <div style="display:flex;align-items:center;gap:10px;">
+          <div class="pts-circle" style="--pct:210deg;width:56px;height:56px;flex-shrink:0;">
+            <div class="pts-inner" style="width:46px;height:46px;">
+              <div class="pts-val" id="drvPoints" style="font-size:13px;">1 240</div>
+              <div class="pts-lbl-sm">PTS</div>
+            </div>
           </div>
-        </div>
-        <div class="pts-info">
-          <div class="pts-level">🥈 Niveau Argent</div>
-          <div class="pts-next">260 pts pour l'Or 🥇</div>
-          <div class="pts-bar-wrap"><div class="pts-bar-fill" id="drvBar" style="width:83%;"></div></div>
+          <div style="flex:1;min-width:0;">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:5px;">
+              <div style="font-size:12px;font-weight:700;color:#fff;">🥈 Niveau Argent</div>
+              <div style="font-size:10px;color:#666;">260 pts pour 🥇 Or</div>
+            </div>
+            <!-- Barre compacte et bien délimitée -->
+            <div style="height:6px;background:#1a1a1a;border-radius:4px;overflow:hidden;margin-bottom:5px;">
+              <div id="drvBar" style="height:100%;width:83%;background:linear-gradient(90deg,#D0021B,#ff5f6d);border-radius:4px;transition:width .5s;"></div>
+            </div>
+            <div style="font-size:9px;color:#444;">1240 / 1500 pts pour le prochain niveau</div>
+          </div>
         </div>
       </div>
 
       <!-- BADGES -->
-      <div class="pts-badge-row">
+      <div class="pts-badge-row" style="margin-bottom:10px;">
         <div class="pts-badge earned">🚦 Signaleur actif</div>
         <div class="pts-badge earned">🛣️ 50 trajets</div>
         <div class="pts-badge earned">⭐ 4.8 étoiles</div>
