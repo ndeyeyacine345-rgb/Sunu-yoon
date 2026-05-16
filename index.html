@@ -1419,10 +1419,10 @@ html, body {
   </div>
 
   <!-- ══ MINISTÈRE DES TRANSPORTS — ADMIN ══ -->
-  <div id="s-perturbations" class="screen">
+  <div id="s-perturbations" class="screen" style="position:relative;" onclick="closeAdminPinPopupOutside(event)">
 
     <!-- HEADER ADMIN -->
-    <div style="background:linear-gradient(135deg,#060d1a,#0a1628);border-bottom:1px solid rgba(59,130,246,0.25);padding:10px 14px 8px;display:flex;align-items:center;gap:8px;flex-shrink:0;">
+    <div style="background:linear-gradient(135deg,#060d1a,#0a1628);border-bottom:1px solid rgba(59,130,246,0.25);padding:10px 14px 8px;display:flex;align-items:center;gap:8px;flex-shrink:0;position:relative;">
       <button onclick="goTo('s-plan')" style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:9px;padding:6px 10px;font-size:11px;font-weight:600;color:#aaa;cursor:pointer;font-family:'DM Sans',sans-serif;display:flex;align-items:center;gap:5px;">
         <svg width="10" height="10" viewBox="0 0 12 12" fill="none"><path d="M8 2L4 6L8 10" stroke="#AAA" stroke-width="1.5" stroke-linecap="round"/></svg>Retour
       </button>
@@ -1437,15 +1437,30 @@ html, body {
         <div style="width:5px;height:5px;border-radius:50%;background:#22c55e;animation:blink 1.5s infinite;"></div>
         <span style="font-size:8px;font-weight:700;color:#22c55e;">CONNECTÉ</span>
       </div>
+      <!-- Bouton clé admin — discret mais dans le header -->
+      <div id="adminKeyBtn" onclick="openAdminPinPopup()" style="width:26px;height:26px;border-radius:8px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:13px;flex-shrink:0;transition:.2s;opacity:0.4;" onmouseenter="this.style.opacity='1'" onmouseleave="this.style.opacity=adminAuthenticated?'1':'0.4'">🔑</div>
+
+      <!-- MINI POPUP PIN ADMIN -->
+      <div id="adminPinPopup" style="display:none;position:absolute;top:48px;right:14px;z-index:200;width:160px;background:#090e1a;border:1px solid rgba(59,130,246,0.25);border-radius:10px;padding:10px;box-shadow:0 8px 28px rgba(0,0,0,0.9);">
+        <input id="pinAdminUser" type="text" placeholder="identifiant" autocomplete="off"
+          style="width:100%;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:6px;padding:6px 8px;font-size:11px;color:#93c5fd;font-family:'DM Sans',sans-serif;outline:none;margin-bottom:5px;"
+          onkeydown="if(event.key==='Enter')document.getElementById('pinAdminCode').focus()"/>
+        <input id="pinAdminCode" type="password" placeholder="••••••" maxlength="6" autocomplete="off"
+          style="width:100%;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:6px;padding:6px 8px;font-size:13px;color:#93c5fd;font-family:monospace;letter-spacing:4px;outline:none;margin-bottom:5px;"
+          onkeydown="if(event.key==='Enter')submitAdminPin()"/>
+        <div id="pinAdminErr" style="font-size:8px;color:#ff5f6d;min-height:10px;margin-bottom:4px;"></div>
+        <button onclick="submitAdminPin()" style="width:100%;background:rgba(29,78,216,0.8);border:none;border-radius:6px;padding:6px;font-size:11px;font-weight:700;color:#fff;cursor:pointer;font-family:'DM Sans',sans-serif;">→</button>
+      </div>
     </div>
 
     <!-- MINISTRY TABS -->
-    <div style="display:flex;background:#060d1a;border-bottom:1px solid rgba(59,130,246,0.15);flex-shrink:0;overflow-x:auto;">
+    <div style="display:flex;background:#060d1a;border-bottom:1px solid rgba(59,130,246,0.15);flex-shrink:0;overflow-x:auto;align-items:center;">
       <div class="min-tab active" id="mtab-stats" onclick="switchMinTab('stats')">📊 Dashboard</div>
       <div class="min-tab" id="mtab-zones" onclick="switchMinTab('zones')">🗺️ Zones</div>
-      <div class="min-tab" id="mtab-alerts" onclick="switchMinTab('alerts')">🚨 Alertes</div>
       <div class="min-tab" id="mtab-ia" onclick="switchMinTab('ia')">🤖 IA Prédict.</div>
-      <div class="min-tab" id="mtab-iot" onclick="switchMinTab('iot')">📷 IoT</div>
+      <!-- Tabs admin — cachés par défaut -->
+      <div class="min-tab" id="mtab-alerts" onclick="switchMinTab('alerts')" style="display:none;">🚨 Alertes</div>
+      <div class="min-tab" id="mtab-iot" onclick="switchMinTab('iot')" style="display:none;">📷 IoT</div>
     </div>
 
     <!-- ── TAB : TABLEAU DE BORD ── -->
@@ -1727,7 +1742,7 @@ html, body {
         <!-- EXPORT RAPPORT -->
         <div style="display:flex;gap:7px;margin-bottom:14px;">
           <button onclick="exportRapport()" style="flex:1;background:rgba(59,130,246,0.1);border:1px solid rgba(59,130,246,0.3);border-radius:10px;padding:10px;font-size:11px;font-weight:700;color:#60a5fa;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:5px;">📄 Exporter rapport PDF</button>
-          <button onclick="switchMinTab('alerts')" style="flex:1;background:rgba(245,158,11,0.08);border:1px solid rgba(245,158,11,0.25);border-radius:10px;padding:10px;font-size:11px;font-weight:700;color:#F59E0B;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:5px;">🚨 Voir les alertes</button>
+          <button onclick="requireAdmin('alerts')" style="flex:1;background:rgba(245,158,11,0.08);border:1px solid rgba(245,158,11,0.25);border-radius:10px;padding:10px;font-size:11px;font-weight:700;color:#F59E0B;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:5px;">🚨 Voir les alertes 🔒</button>
         </div>
 
       </div>
@@ -1831,6 +1846,89 @@ html, body {
     <!-- ── TAB : ALERTES ── -->
     <div class="min-panel" id="mpanel-alerts" style="overflow-y:auto;">
       <div style="padding:10px 14px 0;">
+
+        <!-- ══ SIGNALEMENTS EN ATTENTE DE VALIDATION ══ -->
+        <div style="background:rgba(245,158,11,0.07);border:1px solid rgba(245,158,11,0.25);border-radius:12px;padding:11px 12px;margin-bottom:12px;">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+            <div style="font-size:10px;font-weight:800;color:#F59E0B;text-transform:uppercase;letter-spacing:.5px;">⏳ Signalements citoyens — Validation requise</div>
+            <div style="font-size:9px;font-weight:700;color:#F59E0B;background:rgba(245,158,11,0.12);border:1px solid rgba(245,158,11,0.3);border-radius:10px;padding:2px 8px;" id="pendingCount">3 en attente</div>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:7px;" id="pendingSignals">
+
+            <!-- Signal 1 -->
+            <div class="pending-signal" id="ps1" style="background:rgba(0,0,0,0.25);border:1px solid rgba(245,158,11,0.2);border-radius:10px;padding:9px 11px;">
+              <div style="display:flex;align-items:flex-start;gap:9px;">
+                <div style="font-size:20px;flex-shrink:0;">🚨</div>
+                <div style="flex:1;min-width:0;">
+                  <div style="display:flex;align-items:center;justify-content:space-between;gap:4px;flex-wrap:wrap;">
+                    <div style="font-size:11px;font-weight:700;color:#fff;">Accident signalé — Autoroute AIBD</div>
+                    <div style="font-size:8px;color:#F59E0B;font-weight:700;white-space:nowrap;">Réf. #SY84231</div>
+                  </div>
+                  <div style="font-size:9px;color:#555;margin-top:2px;">📍 PK 22 · Il y a 4 min · Chauffeur 🥈 Argent · 4.8★</div>
+                  <div style="display:flex;align-items:center;gap:5px;margin-top:4px;">
+                    <div style="font-size:8px;color:#888;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:5px;padding:2px 6px;">Crédibilité : <span style="color:#22c55e;font-weight:700;">Haute</span></div>
+                    <div style="font-size:8px;color:#888;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:5px;padding:2px 6px;">3 confirmations</div>
+                  </div>
+                </div>
+              </div>
+              <div style="display:flex;gap:6px;margin-top:8px;">
+                <button onclick="validateSignal('ps1','✅')" style="flex:1;background:rgba(34,197,94,0.12);border:1px solid rgba(34,197,94,0.35);border-radius:8px;padding:6px;font-size:10px;font-weight:700;color:#22c55e;cursor:pointer;font-family:inherit;">✅ Valider</button>
+                <button onclick="validateSignal('ps1','❌')" style="flex:1;background:rgba(208,2,27,0.1);border:1px solid rgba(208,2,27,0.3);border-radius:8px;padding:6px;font-size:10px;font-weight:700;color:#ff5f6d;cursor:pointer;font-family:inherit;">❌ Rejeter</button>
+                <button onclick="validateSignal('ps1','🔍')" style="background:rgba(59,130,246,0.1);border:1px solid rgba(59,130,246,0.3);border-radius:8px;padding:6px 9px;font-size:10px;font-weight:700;color:#60a5fa;cursor:pointer;font-family:inherit;">🔍 Vérifier</button>
+              </div>
+            </div>
+
+            <!-- Signal 2 -->
+            <div class="pending-signal" id="ps2" style="background:rgba(0,0,0,0.25);border:1px solid rgba(245,158,11,0.2);border-radius:10px;padding:9px 11px;">
+              <div style="display:flex;align-items:flex-start;gap:9px;">
+                <div style="font-size:20px;flex-shrink:0;">🚧</div>
+                <div style="flex:1;min-width:0;">
+                  <div style="display:flex;align-items:center;justify-content:space-between;gap:4px;flex-wrap:wrap;">
+                    <div style="font-size:11px;font-weight:700;color:#fff;">Route barrée — Av. Bourguiba</div>
+                    <div style="font-size:8px;color:#F59E0B;font-weight:700;white-space:nowrap;">Réf. #SY71104</div>
+                  </div>
+                  <div style="font-size:9px;color:#555;margin-top:2px;">📍 Médina · Il y a 11 min · Chauffeur 🥇 Or · 4.6★</div>
+                  <div style="display:flex;align-items:center;gap:5px;margin-top:4px;">
+                    <div style="font-size:8px;color:#888;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:5px;padding:2px 6px;">Crédibilité : <span style="color:#F59E0B;font-weight:700;">Moyenne</span></div>
+                    <div style="font-size:8px;color:#888;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:5px;padding:2px 6px;">1 confirmation</div>
+                  </div>
+                </div>
+              </div>
+              <div style="display:flex;gap:6px;margin-top:8px;">
+                <button onclick="validateSignal('ps2','✅')" style="flex:1;background:rgba(34,197,94,0.12);border:1px solid rgba(34,197,94,0.35);border-radius:8px;padding:6px;font-size:10px;font-weight:700;color:#22c55e;cursor:pointer;font-family:inherit;">✅ Valider</button>
+                <button onclick="validateSignal('ps2','❌')" style="flex:1;background:rgba(208,2,27,0.1);border:1px solid rgba(208,2,27,0.3);border-radius:8px;padding:6px;font-size:10px;font-weight:700;color:#ff5f6d;cursor:pointer;font-family:inherit;">❌ Rejeter</button>
+                <button onclick="validateSignal('ps2','🔍')" style="background:rgba(59,130,246,0.1);border:1px solid rgba(59,130,246,0.3);border-radius:8px;padding:6px 9px;font-size:10px;font-weight:700;color:#60a5fa;cursor:pointer;font-family:inherit;">🔍 Vérifier</button>
+              </div>
+            </div>
+
+            <!-- Signal 3 -->
+            <div class="pending-signal" id="ps3" style="background:rgba(0,0,0,0.25);border:1px solid rgba(245,158,11,0.2);border-radius:10px;padding:9px 11px;">
+              <div style="display:flex;align-items:flex-start;gap:9px;">
+                <div style="font-size:20px;flex-shrink:0;">🌊</div>
+                <div style="flex:1;min-width:0;">
+                  <div style="display:flex;align-items:center;justify-content:space-between;gap:4px;flex-wrap:wrap;">
+                    <div style="font-size:11px;font-weight:700;color:#fff;">Inondation — Yeumbeul Nord</div>
+                    <div style="font-size:8px;color:#F59E0B;font-weight:700;white-space:nowrap;">Réf. #SY53890</div>
+                  </div>
+                  <div style="font-size:9px;color:#555;margin-top:2px;">📍 Route de Rufisque · Il y a 22 min · Nouveau chauffeur</div>
+                  <div style="display:flex;align-items:center;gap:5px;margin-top:4px;">
+                    <div style="font-size:8px;color:#888;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:5px;padding:2px 6px;">Crédibilité : <span style="color:#ff5f6d;font-weight:700;">Faible</span></div>
+                    <div style="font-size:8px;color:#888;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:5px;padding:2px 6px;">0 confirmation</div>
+                  </div>
+                </div>
+              </div>
+              <div style="display:flex;gap:6px;margin-top:8px;">
+                <button onclick="validateSignal('ps3','✅')" style="flex:1;background:rgba(34,197,94,0.12);border:1px solid rgba(34,197,94,0.35);border-radius:8px;padding:6px;font-size:10px;font-weight:700;color:#22c55e;cursor:pointer;font-family:inherit;">✅ Valider</button>
+                <button onclick="validateSignal('ps3','❌')" style="flex:1;background:rgba(208,2,27,0.1);border:1px solid rgba(208,2,27,0.3);border-radius:8px;padding:6px;font-size:10px;font-weight:700;color:#ff5f6d;cursor:pointer;font-family:inherit;">❌ Rejeter</button>
+                <button onclick="validateSignal('ps3','🔍')" style="background:rgba(59,130,246,0.1);border:1px solid rgba(59,130,246,0.3);border-radius:8px;padding:6px 9px;font-size:10px;font-weight:700;color:#60a5fa;cursor:pointer;font-family:inherit;">🔍 Vérifier</button>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- Filtres alertes officielles -->
+        <div style="font-size:10px;font-weight:700;color:#555;text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px;">📋 Alertes officielles validées</div>
         <div style="display:flex;gap:6px;margin-bottom:10px;overflow-x:auto;padding-bottom:2px;">
           <div class="pfil on" onclick="filterPerturb(this,true)">Tout</div>
           <div class="pfil" onclick="filterPerturb(this,true)">🚨 Accidents</div>
@@ -2235,48 +2333,120 @@ html, body {
   </div>
 
   <!-- ══ ÉCRAN LOGIN ADMIN ══ -->
-  <div id="s-adminlogin" class="screen" style="background:linear-gradient(160deg,#060d1a 0%,#0a1628 100%);align-items:center;justify-content:center;padding:24px;">
-    <div style="width:100%;max-width:340px;">
-      <!-- Logo ministère -->
-      <div style="text-align:center;margin-bottom:28px;">
-        <div style="width:64px;height:64px;background:linear-gradient(135deg,#1a4a8a,#0d2f5c);border-radius:18px;display:flex;align-items:center;justify-content:center;font-size:32px;margin:0 auto 14px;box-shadow:0 8px 24px rgba(59,130,246,0.3);">🇸🇳</div>
-        <div style="font-size:13px;font-weight:800;color:#fff;letter-spacing:.8px;">MINISTÈRE DES TRANSPORTS</div>
-        <div style="font-size:10px;color:rgba(96,165,250,0.6);margin-top:3px;letter-spacing:.4px;">PORTAIL ADMINISTRATEUR · ACCÈS SÉCURISÉ</div>
+  <!-- ══ ADMIN LOGIN — PAGE DÉDIÉE ══ -->
+  <div id="s-adminlogin" class="screen" style="background:#03080f;flex-direction:column;overflow:hidden;">
+
+    <!-- Bande décorative haut -->
+    <div style="height:3px;background:linear-gradient(90deg,#1d4ed8,#3B82F6,#22d3ee,#3B82F6,#1d4ed8);flex-shrink:0;"></div>
+
+    <!-- Fond grille -->
+    <div style="position:absolute;inset:0;background-image:linear-gradient(rgba(59,130,246,0.04) 1px,transparent 1px),linear-gradient(90deg,rgba(59,130,246,0.04) 1px,transparent 1px);background-size:28px 28px;pointer-events:none;"></div>
+    <div style="position:absolute;inset:0;background:radial-gradient(ellipse 70% 60% at 50% 40%,rgba(29,78,216,0.10) 0%,transparent 70%);pointer-events:none;"></div>
+
+    <!-- En-tête institutionnel -->
+    <div style="background:linear-gradient(135deg,#040c1a,#060f22);border-bottom:1px solid rgba(59,130,246,0.2);padding:12px 16px 10px;display:flex;align-items:center;gap:10px;flex-shrink:0;position:relative;z-index:2;">
+      <div style="width:34px;height:34px;background:linear-gradient(135deg,#1a4a8a,#0d2f5c);border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;box-shadow:0 3px 12px rgba(29,78,216,0.4);">🇸🇳</div>
+      <div style="flex:1;">
+        <div style="font-size:11px;font-weight:800;color:#fff;letter-spacing:.6px;line-height:1.2;">RÉPUBLIQUE DU SÉNÉGAL</div>
+        <div style="font-size:8px;color:rgba(96,165,250,0.6);letter-spacing:.4px;margin-top:1px;">MINISTÈRE DES TRANSPORTS · SUNUYOON</div>
       </div>
-
-      <!-- Champ identifiant -->
-      <div style="margin-bottom:12px;">
-        <div style="font-size:10px;font-weight:700;color:#555;text-transform:uppercase;letter-spacing:.5px;margin-bottom:5px;">Identifiant</div>
-        <input id="adminUser" type="text" placeholder="admin@transport.sn" style="width:100%;background:rgba(255,255,255,0.04);border:1px solid rgba(59,130,246,0.25);border-radius:11px;padding:12px 14px;font-size:13px;color:#fff;font-family:'DM Sans',sans-serif;outline:none;box-sizing:border-box;" onfocus="this.style.borderColor='rgba(59,130,246,0.6)'" onblur="this.style.borderColor='rgba(59,130,246,0.25)'"/>
-      </div>
-
-      <!-- Champ mot de passe -->
-      <div style="margin-bottom:8px;">
-        <div style="font-size:10px;font-weight:700;color:#555;text-transform:uppercase;letter-spacing:.5px;margin-bottom:5px;">Mot de passe</div>
-        <div style="position:relative;">
-          <input id="adminPass" type="password" placeholder="••••••••" style="width:100%;background:rgba(255,255,255,0.04);border:1px solid rgba(59,130,246,0.25);border-radius:11px;padding:12px 40px 12px 14px;font-size:13px;color:#fff;font-family:'DM Sans',sans-serif;outline:none;box-sizing:border-box;" onfocus="this.style.borderColor='rgba(59,130,246,0.6)'" onblur="this.style.borderColor='rgba(59,130,246,0.25)'"/>
-          <div onclick="toggleAdminPass()" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);cursor:pointer;font-size:14px;" id="adminPassEye">👁</div>
-        </div>
-      </div>
-
-      <!-- Hint discret -->
-      <div style="font-size:9px;color:#2a3a4a;text-align:right;margin-bottom:18px;">Accès réservé aux agents accrédités</div>
-
-      <!-- Bouton connexion -->
-      <button onclick="doAdminLogin()" style="width:100%;background:linear-gradient(135deg,#1d4ed8,#1e40af);color:#fff;border:none;border-radius:12px;padding:14px;font-size:13px;font-weight:800;cursor:pointer;font-family:'DM Sans',sans-serif;letter-spacing:.3px;box-shadow:0 4px 20px rgba(29,78,216,0.4);transition:all .2s;" id="adminLoginBtn">
-        🔐 Connexion sécurisée
-      </button>
-
-      <!-- Erreur -->
-      <div id="adminLoginErr" style="display:none;text-align:center;margin-top:10px;font-size:11px;color:#ff5f6d;background:rgba(208,2,27,0.08);border:1px solid rgba(208,2,27,0.2);border-radius:8px;padding:7px;">
-        ❌ Identifiants incorrects
-      </div>
-
-      <!-- Retour -->
-      <button onclick="goTo('s-plan')" style="width:100%;margin-top:10px;background:transparent;border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:11px;font-size:12px;color:#555;cursor:pointer;font-family:'DM Sans',sans-serif;">
-        ← Retour à l'application
-      </button>
+      <div style="font-size:8px;font-weight:700;color:#3B82F6;background:rgba(59,130,246,0.08);border:1px solid rgba(59,130,246,0.2);border-radius:8px;padding:3px 8px;letter-spacing:.3px;">ACCÈS SÉCURISÉ</div>
     </div>
+
+    <!-- Corps centré -->
+    <div style="flex:1;overflow-y:auto;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:20px 20px 16px;position:relative;z-index:2;">
+      <div style="width:100%;max-width:310px;">
+
+        <!-- Badge sécurité -->
+        <div style="text-align:center;margin-bottom:22px;">
+          <div style="position:relative;width:72px;height:72px;margin:0 auto 14px;">
+            <!-- Ring animé -->
+            <svg width="72" height="72" style="position:absolute;inset:0;animation:spin 8s linear infinite;" viewBox="0 0 72 72">
+              <circle cx="36" cy="36" r="32" fill="none" stroke="rgba(59,130,246,0.15)" stroke-width="1.5"/>
+              <circle cx="36" cy="36" r="32" fill="none" stroke="#3B82F6" stroke-width="1.5" stroke-dasharray="40 160" stroke-linecap="round"/>
+            </svg>
+            <div style="position:absolute;inset:8px;background:linear-gradient(135deg,#0d2f5c,#1a4a8a);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:26px;box-shadow:0 4px 20px rgba(29,78,216,0.4);">🔐</div>
+          </div>
+          <div style="font-size:15px;font-weight:800;color:#fff;letter-spacing:.5px;">Portail Administrateur</div>
+          <div style="font-size:10px;color:rgba(96,165,250,0.5);margin-top:4px;letter-spacing:.3px;">Accès réservé aux agents accrédités</div>
+        </div>
+
+        <!-- Carte formulaire -->
+        <div style="background:rgba(255,255,255,0.025);border:1px solid rgba(59,130,246,0.18);border-radius:16px;padding:18px 16px 16px;backdrop-filter:blur(8px);">
+
+          <!-- Identifiant -->
+          <div style="margin-bottom:12px;">
+            <div style="display:flex;align-items:center;gap:5px;margin-bottom:5px;">
+              <svg width="10" height="10" viewBox="0 0 12 12" fill="none"><circle cx="6" cy="4.5" r="2.5" stroke="#3B82F6" stroke-width="1.2"/><path d="M2 11c0-2.2 1.8-4 4-4s4 1.8 4 4" stroke="#3B82F6" stroke-width="1.2" stroke-linecap="round"/></svg>
+              <div style="font-size:9px;font-weight:700;color:#3B82F6;text-transform:uppercase;letter-spacing:.6px;">Identifiant</div>
+            </div>
+            <input id="adminUser" type="text" placeholder="admin@transport.sn"
+              style="width:100%;background:rgba(59,130,246,0.05);border:1px solid rgba(59,130,246,0.2);border-radius:10px;padding:11px 13px;font-size:13px;color:#fff;font-family:'DM Sans',sans-serif;outline:none;box-sizing:border-box;transition:border-color .2s;"
+              onfocus="this.style.borderColor='rgba(59,130,246,0.6)';this.style.background='rgba(59,130,246,0.08)'"
+              onblur="this.style.borderColor='rgba(59,130,246,0.2)';this.style.background='rgba(59,130,246,0.05)'"/>
+          </div>
+
+          <!-- Mot de passe -->
+          <div style="margin-bottom:6px;">
+            <div style="display:flex;align-items:center;gap:5px;margin-bottom:5px;">
+              <svg width="10" height="10" viewBox="0 0 12 12" fill="none"><rect x="2" y="5" width="8" height="6" rx="1.5" stroke="#3B82F6" stroke-width="1.2"/><path d="M4 5V3.5a2 2 0 0 1 4 0V5" stroke="#3B82F6" stroke-width="1.2" stroke-linecap="round"/></svg>
+              <div style="font-size:9px;font-weight:700;color:#3B82F6;text-transform:uppercase;letter-spacing:.6px;">Mot de passe</div>
+            </div>
+            <div style="position:relative;">
+              <input id="adminPass" type="password" placeholder="••••••••"
+                style="width:100%;background:rgba(59,130,246,0.05);border:1px solid rgba(59,130,246,0.2);border-radius:10px;padding:11px 40px 11px 13px;font-size:13px;color:#fff;font-family:'DM Sans',sans-serif;outline:none;box-sizing:border-box;transition:border-color .2s;"
+                onfocus="this.style.borderColor='rgba(59,130,246,0.6)';this.style.background='rgba(59,130,246,0.08)'"
+                onblur="this.style.borderColor='rgba(59,130,246,0.2)';this.style.background='rgba(59,130,246,0.05)'"/>
+              <div onclick="toggleAdminPass()" id="adminPassEye"
+                style="position:absolute;right:12px;top:50%;transform:translateY(-50%);cursor:pointer;font-size:13px;color:#3B82F6;opacity:.6;">👁</div>
+            </div>
+          </div>
+
+          <!-- Hint -->
+          <div style="font-size:8px;color:#1e3a5a;text-align:right;margin-bottom:14px;">demo : admin / admin123</div>
+
+          <!-- Bouton connexion -->
+          <button onclick="doAdminLogin()" id="adminLoginBtn"
+            style="width:100%;background:linear-gradient(135deg,#1d4ed8,#1e40af);color:#fff;border:none;border-radius:11px;padding:13px;font-size:13px;font-weight:800;cursor:pointer;font-family:'DM Sans',sans-serif;letter-spacing:.3px;box-shadow:0 4px 20px rgba(29,78,216,0.4);transition:all .2s;display:flex;align-items:center;justify-content:center;gap:7px;">
+            <svg width="13" height="13" viewBox="0 0 14 14" fill="none"><rect x="2" y="6" width="8" height="7" rx="1.5" stroke="white" stroke-width="1.3"/><path d="M5 6V4a2 2 0 0 1 4 0v2" stroke="white" stroke-width="1.3" stroke-linecap="round"/></svg>
+            Connexion sécurisée
+          </button>
+
+          <!-- Erreur -->
+          <div id="adminLoginErr" style="display:none;text-align:center;margin-top:9px;font-size:10px;color:#ff5f6d;background:rgba(208,2,27,0.07);border:1px solid rgba(208,2,27,0.18);border-radius:8px;padding:7px 10px;">
+            ❌ Identifiants incorrects — réessayez
+          </div>
+        </div>
+
+        <!-- Séparateur -->
+        <div style="display:flex;align-items:center;gap:8px;margin:14px 0 12px;">
+          <div style="flex:1;height:1px;background:rgba(255,255,255,0.06);"></div>
+          <div style="font-size:8px;color:#1e3a5a;font-weight:600;letter-spacing:.4px;">OU</div>
+          <div style="flex:1;height:1px;background:rgba(255,255,255,0.06);"></div>
+        </div>
+
+        <!-- Retour app -->
+        <button onclick="goTo('s-plan')"
+          style="width:100%;background:transparent;border:1px solid rgba(255,255,255,0.07);border-radius:11px;padding:11px;font-size:11px;color:#2a4a6a;cursor:pointer;font-family:'DM Sans',sans-serif;display:flex;align-items:center;justify-content:center;gap:6px;transition:border-color .2s;"
+          onmouseover="this.style.borderColor='rgba(255,255,255,0.15)'"
+          onmouseout="this.style.borderColor='rgba(255,255,255,0.07)'">
+          <svg width="11" height="11" viewBox="0 0 12 12" fill="none"><path d="M8 2L4 6L8 10" stroke="#2a4a6a" stroke-width="1.5" stroke-linecap="round"/></svg>
+          Retour à l'application SUNUYOON
+        </button>
+
+        <!-- Pied de page légal -->
+        <div style="text-align:center;margin-top:18px;">
+          <div style="font-size:8px;color:#0d1e30;line-height:1.6;">
+            Accès protégé · Toutes les connexions sont enregistrées<br/>
+            Ministère des Transports du Sénégal · SUNUYOON v7
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Bande décorative bas -->
+    <div style="height:2px;background:linear-gradient(90deg,transparent,rgba(59,130,246,0.3),transparent);flex-shrink:0;"></div>
   </div>
 
   <!-- ══ MODAL CONNEXION WALLET ══ -->
@@ -2908,6 +3078,65 @@ function switchMinTab(tab) {
   if (tab === 'stats') { updateDashTime(); }
   if (tab === 'ia') initIATab();
   if (tab === 'iot') initIoTTab();
+}
+
+// ── IoT ACCESS GUARD (admin only) ──
+function requireAdminForIoT() {
+  if (adminAuthenticated) {
+    switchMinTab('iot');
+  } else {
+    // Show inline prompt
+    showToast('🔒 Accès IoT réservé à l\'administrateur — connectez-vous d\'abord', '🔒');
+    setTimeout(() => {
+      goTo('s-adminlogin');
+      showToast('Entrez vos identifiants admin pour accéder à l\'IoT', '🇸🇳');
+    }, 1400);
+  }
+}
+
+// ── SIGNAL VALIDATION (admin) ──
+let _pendingCount = 3;
+function validateSignal(id, action) {
+  if (!adminAuthenticated) {
+    showToast('🔒 Validation réservée à l\'administrateur', '🔒');
+    return;
+  }
+  const card = document.getElementById(id);
+  if (!card) return;
+  const titleEl = card.querySelector('div[style*="font-weight:700;color:#fff"]');
+  const title = titleEl ? titleEl.textContent : 'Signalement';
+  const refEl = card.querySelector('div[style*="color:#F59E0B;font-weight:700"]');
+  const ref = refEl ? refEl.textContent : '';
+
+  if (action === '🔍') {
+    showToast(`🔍 ${ref} — Vérification en cours via IoT & recoupement`, '🔍');
+    setTimeout(() => showToast('📡 Données caméra IP disponibles — crédibilité mise à jour', '✅'), 2000);
+    return;
+  }
+
+  card.style.transition = 'opacity .3s, transform .3s';
+  card.style.opacity = '0'; card.style.transform = 'translateX(16px)';
+
+  setTimeout(() => {
+    card.remove();
+    _pendingCount = Math.max(0, _pendingCount - 1);
+    const countEl = document.getElementById('pendingCount');
+    if (countEl) countEl.textContent = _pendingCount + ' en attente';
+
+    if (action === '✅') {
+      showToast(`✅ ${title} — Validé · Points attribués au chauffeur`, '✅');
+      // Add to official alerts list
+      ALL_ALERTS.unshift({
+        icon: '✅', cls: 'warning', badge: 'VALIDÉ',
+        type: 'accident', title: title,
+        loc: 'Dakar', desc: 'Signalement citoyen validé par le Ministère.',
+        delay: '—', time: 'À l\'instant', src: 'Validé Admin', dateStr: new Date().toLocaleDateString('fr-FR')
+      });
+      renderAlertsList();
+    } else {
+      showToast(`❌ ${title} — Rejeté · Aucun point attribué`, '❌');
+    }
+  }, 320);
 }
 
 // ── DASHBOARD CLOCK ──
@@ -3798,52 +4027,68 @@ function dispatchDrone() {
   setTimeout(() => showToast(`📡 ${d} : flux vidéo établi`, '📷'), 2000);
 }
 
-// ══ ADMIN LOGIN ══
+// ══ ADMIN PIN POPUP ══
 let adminAuthenticated = false;
-function doAdminLogin() {
-  const user = document.getElementById('adminUser').value.trim();
-  const pass = document.getElementById('adminPass').value;
-  const btn  = document.getElementById('adminLoginBtn');
-  const err  = document.getElementById('adminLoginErr');
-  err.style.display = 'none';
-  btn.textContent = '⏳ Vérification…';
-  btn.style.opacity = '0.7';
-  setTimeout(() => {
-    // Credentials: admin / admin123
-    if ((user === 'admin@transport.sn' || user === 'admin') && pass === 'admin123') {
-      adminAuthenticated = true;
-      btn.textContent = '✅ Accès accordé';
-      btn.style.background = 'linear-gradient(135deg,#166534,#14532d)';
-      setTimeout(() => {
-        goTo('s-perturbations');
-        setTimeout(() => switchMinTab('stats'), 150);
-        btn.textContent = '🔐 Connexion sécurisée';
-        btn.style.opacity = '1';
-        btn.style.background = 'linear-gradient(135deg,#1d4ed8,#1e40af)';
-        document.getElementById('adminUser').value = '';
-        document.getElementById('adminPass').value = '';
-      }, 700);
-    } else {
-      err.style.display = 'block';
-      btn.textContent = '🔐 Connexion sécurisée';
-      btn.style.opacity = '1';
-      document.getElementById('adminPass').value = '';
-    }
-  }, 1200);
+let _pendingAdminTab = null; // tab à ouvrir après auth
+
+function openAdminPinPopup(targetTab) {
+  _pendingAdminTab = targetTab || null;
+  document.getElementById('pinAdminUser').value = '';
+  document.getElementById('pinAdminCode').value = '';
+  document.getElementById('pinAdminErr').textContent = '';
+  document.getElementById('adminPinPopup').style.display = 'block';
+  setTimeout(() => document.getElementById('pinAdminUser').focus(), 80);
 }
-function toggleAdminPass() {
-  const inp = document.getElementById('adminPass');
-  const eye = document.getElementById('adminPassEye');
-  if (inp.type === 'password') { inp.type = 'text'; eye.textContent = '🙈'; }
-  else { inp.type = 'password'; eye.textContent = '👁'; }
+
+function closeAdminPinPopup() {
+  document.getElementById('adminPinPopup').style.display = 'none';
+  _pendingAdminTab = null;
 }
-// Allow Enter key on login
-document.addEventListener('DOMContentLoaded', () => {
-  ['adminUser','adminPass'].forEach(id => {
-    const el = document.getElementById(id);
-    if (el) el.addEventListener('keydown', e => { if (e.key === 'Enter') doAdminLogin(); });
-  });
-});
+
+function closeAdminPinPopupOutside(e) {
+  const popup = document.getElementById('adminPinPopup');
+  const btn   = document.getElementById('adminKeyBtn');
+  if (popup && popup.style.display !== 'none' && !popup.contains(e.target) && e.target !== btn) {
+    closeAdminPinPopup();
+  }
+}
+
+function toggleAdminPinVis() {
+  const inp = document.getElementById('pinAdminCode');
+  inp.type = inp.type === 'password' ? 'text' : 'password';
+}
+
+const ADMIN_CREDS = { 'admin': '1234', 'ministere': '5678' };
+
+function submitAdminPin() {
+  const user = document.getElementById('pinAdminUser').value.trim().toLowerCase();
+  const code = document.getElementById('pinAdminCode').value.trim();
+  const err  = document.getElementById('pinAdminErr');
+  if (!user || !code) { err.textContent = 'Remplissez les deux champs.'; return; }
+  if (ADMIN_CREDS[user] === code) {
+    adminAuthenticated = true;
+    // Afficher les tabs cachés
+    const al = document.getElementById('mtab-alerts'); if(al) al.style.display = 'flex';
+    const io = document.getElementById('mtab-iot');    if(io) io.style.display = 'flex';
+    // Changer la clé en point vert discret
+    const kb = document.getElementById('adminKeyBtn'); if(kb) { kb.textContent = '●'; kb.style.color='rgba(34,197,94,0.7)'; kb.style.borderColor='rgba(34,197,94,0.25)'; kb.style.fontSize='10px'; }
+    closeAdminPinPopup();
+    playSoftTone(600,0.07,0.03); setTimeout(()=>playSoftTone(750,0.06,0.025),120);
+    showToast('Accès admin accordé — IoT & Alertes déverrouillés', '🔓');
+    if (_pendingAdminTab) { setTimeout(() => switchMinTab(_pendingAdminTab), 200); _pendingAdminTab = null; }
+  } else {
+    err.textContent = '❌ Identifiant ou PIN incorrect.';
+    document.getElementById('pinAdminCode').value = '';
+    playSoftTone(180,0.05,0.04);
+  }
+}
+
+function requireAdmin(tab) {
+  if (adminAuthenticated) { switchMinTab(tab); }
+  else { openAdminPinPopup(tab); }
+}
+
+function requireAdminForIoT() { requireAdmin('iot'); }
 
 // ══ WALLET CONNECT FLOW ══
 let _walletProvider = '';
